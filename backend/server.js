@@ -13,6 +13,13 @@ connectDB();
 
 const app = express();
 
+// Add this line right here
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Request received for URL: ${req.url}`);
+  next();
+});
+
+
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -48,6 +55,9 @@ app.get('/api/health', (req, res) => {
 // app.use('/api/tasks', require('./routes/taskRoutes'));
 // app.use('/api/projects', require('./routes/projectRoutes'));
 
+// Test routes
+app.use('/api/test', require('./routes/testRoutes'));
+
 // Error handler (must be last)
 app.use(errorHandler);
 
@@ -57,3 +67,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV}`);
 });
+
+//find and kill AirPlay on port 5000 with these commands
+//sudo lsof -i :5000 //Run this command to find the process ID (PID) using port 5000
+//kill -9 <PID>409
+//kill -9 409
