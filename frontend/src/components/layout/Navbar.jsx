@@ -14,7 +14,7 @@ const Navbar = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center text-2xl font-bold text-blue-600">
               <CheckSquare className="h-8 w-8 mr-2 text-blue-600" />
-              TaskMaster Pro
+              To-Do-App
             </Link>
           </div>
 

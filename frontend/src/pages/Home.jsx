@@ -27,7 +27,7 @@ const Home = () => {
 
       {/* 🚀 Features Section */}
       <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8"> {/*max-w-7xl doesn't appear well in the browser*/}
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
             Features Designed for Productivity
           </h2>
