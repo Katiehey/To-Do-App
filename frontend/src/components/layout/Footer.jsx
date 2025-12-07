@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
   return (
     <footer className="bg-gray-800 text-white mt-10 p-6">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+      <div className="mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">{/*max-w-7xl doesn't appear well in the browser*/}
         {/* Copyright Section */}
         <p className="text-sm">
           &copy; {new Date().getFullYear()} **To-Do-App**. All rights reserved.

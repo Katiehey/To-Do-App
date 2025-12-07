@@ -8,7 +8,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white shadow-md">
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className=" mx-auto px-4 sm:px-6 lg:px-8">{/*max-w-7xl doesn't appear well in the browser*/}
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <div className="flex-shrink-0">
