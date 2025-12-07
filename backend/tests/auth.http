@@ -1,0 +1,46 @@
+#Create API Testing Collection
+### Register User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "password123"
+}
+
+### Login User
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane@example.com",
+  "password": "password123"
+}
+
+### Get Current User
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Update Profile
+PUT http://localhost:5000/api/auth/profile
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "preferences": {
+    "theme": "dark",
+    "defaultView": "kanban"
+  }
+}
+
+### Update Password
+PUT http://localhost:5000/api/auth/password
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "currentPassword": "password123",
+  "newPassword": "newpassword123"
+}

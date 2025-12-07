@@ -1,12 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const validateEnv = require('./utils/validateEnv');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./middleware/logger');
 
+
 // Load environment variables
 dotenv.config();
+
+// Validate environment variables
+validateEnv();
 
 // Connect to MongoDB
 connectDB();
@@ -51,10 +56,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes (will be added in next sessions)
-// app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 // app.use('/api/tasks', require('./routes/taskRoutes'));
 // app.use('/api/projects', require('./routes/projectRoutes'));
-
 // Test routes
 app.use('/api/test', require('./routes/testRoutes'));
 
