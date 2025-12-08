@@ -11,7 +11,7 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-4">
           <CheckSquare className="w-12 h-12 text-blue-600 mx-auto mb-4" />
           <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
-            Your Personal **Task Manager**
+            Your Personal Task Manager
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Organize your life, boost productivity, and never miss a deadline.
