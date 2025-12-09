@@ -1,0 +1,64 @@
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN_HERE
+
+### Login to get token
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+### Create Task
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Build TaskMaster Pro",
+  "description": "Complete all Pomodoro sessions",
+  "priority": "high",
+  "tags": ["development", "fullstack"],
+  "dueDate": "2024-12-20T10:00:00Z",
+  "status": "in-progress"
+}
+
+### Get All Tasks
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+
+### Get Tasks with Filters
+GET {{baseUrl}}/tasks?priority=high&completed=false
+Authorization: Bearer {{token}}
+
+### Search Tasks
+GET {{baseUrl}}/tasks?search=build
+Authorization: Bearer {{token}}
+
+### Get Task by ID
+GET {{baseUrl}}/tasks/TASK_ID_HERE
+Authorization: Bearer {{token}}
+
+### Update Task
+PUT {{baseUrl}}/tasks/TASK_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Build TaskMaster Pro - Updated",
+  "status": "completed",
+  "priority": "medium"
+}
+
+### Toggle Task Completion
+PATCH {{baseUrl}}/tasks/TASK_ID_HERE/toggle
+Authorization: Bearer {{token}}
+
+### Get Task Statistics
+GET {{baseUrl}}/tasks/stats
+Authorization: Bearer {{token}}
+
+### Delete Task
+DELETE {{baseUrl}}/tasks/TASK_ID_HERE
+Authorization: Bearer {{token}}
