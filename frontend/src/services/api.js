@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,14 +29,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+    const isLoginEndpoint = error.config.url.endsWith('/auth/login');
+
+    // Check for 401 AND ensure it's NOT the login endpoint
+    if (error.response?.status === 401 && !isLoginEndpoint) {
+      // This logic only runs when a user is on a protected page
+      // and their token has expired (401 on /tasks, /projects, etc.)
+      
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      
+      // Use window.location.replace to maintain history, but the reload is still necessary
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     }
+    
+    // ⚠️ IMPORTANT: Always reject the promise so Login.jsx can catch the error
     return Promise.reject(error);
   }
 );

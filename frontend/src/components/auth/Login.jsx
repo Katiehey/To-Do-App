@@ -23,22 +23,38 @@ const Login = () => {
       ...prevFormData,
       [e.target.name]: e.target.value,
     }));
-    setError('');
+    // Only clear the error state if an error is currently displayed
+    //if (error) {
+    //setError(''); 
+    //}
   };
 
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    //e.preventDefault();
     setError('');
     setLoading(true);
     
-    const result = await login(formData.email, formData.password); 
-    
-    if (result.success) {
-      navigate('/tasks');
-    } else {
-      setError(result.error);
+    try {
+      // The login function no longer updates the global error state internally
+      const result = await login(formData.email, formData.password); 
+
+      if (result.success) {
+        // Only clear the error on successful navigation
+        //setError(''); 
+        navigate('/tasks');
+        //return; 
+      } else {
+        // Set the local error using the message returned from the function
+        setError(result.error); 
+      }
+    } catch (err) {
+      // This catch is mostly for network errors if axios fails completely
+      setError("An unexpected network error occurred."); 
+    } finally {
+      // This ensures loading is always set to false in the Login component
+      setLoading(false); 
     }
-    setLoading(false);
   };
 
   return (
@@ -67,7 +83,7 @@ const Login = () => {
         )}
         
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6" key={error ? "error-form" : "login-form"}>
           
           {/* Email Field */}
           <div>
@@ -83,6 +99,8 @@ const Login = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                // 💡 FIX: Add autocomplete for email
+                autoComplete="email"
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="you@example.com"
                 disabled={loading}
@@ -105,6 +123,8 @@ const Login = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
+                // 💡 FIX: Add autocomplete for current password
+                //autoComplete="password"
                 // Updated pr-10 for spacing, added text-gray-900 for visibility
                 className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 placeholder="••••••••"
@@ -128,7 +148,8 @@ const Login = () => {
           
           {/* Submit Button */}
           <button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={loading}
             className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-150"
           >

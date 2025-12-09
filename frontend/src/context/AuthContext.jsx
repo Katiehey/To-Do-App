@@ -60,30 +60,43 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed';
-      setError(message);
+      //setError(message);
       return { success: false, error: message };
     }
   };
 
   // Login user
-  const login = async (email, password) => {
-    try {
-      setError(null);
-      const response = await api.post('/auth/login', {
-        email,
-        password,
-      });
+const login = async (email, password) => {
+  try {
+    setError(null);
+    const response = await api.post('/auth/login', {
+      email,
+      password,
+    });
 
-      const { user, token } = response.data.data;
-      localStorage.setItem('token', token);
-      setUser(user);
-      return { success: true };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Login failed';
-      setError(message);
-      return { success: false, error: message };
+    const { user, token } = response.data.data;
+    localStorage.setItem('token', token);
+    setUser(user);
+    return { success: true };
+  } catch (err) {
+    // Determine the error message based on the type of error received
+    let message = 'Login failed';
+
+    if (err.response) {
+      // This is an API error (e.g., 401 Invalid credentials)
+      message = err.response.data?.message || 'Login failed';
+    } else if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        // Handle specific Axios timeout error
+        message = 'Connection timed out. Please check your network or try again later.';
+    } else {
+        // Generic network error (server offline, CORS issue)
+        message = 'A network error occurred. Is the server running?';
     }
-  };
+
+    // Return the structured error object to Login.jsx
+    return { success: false, error: message };
+  }
+};
 
   // Logout user
   const logout = () => {

@@ -129,6 +129,8 @@ const Register = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
+                // 💡 FIX: Add autocomplete for full name
+                autoComplete="name"
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="John Doe"
                 disabled={loading}
@@ -150,6 +152,8 @@ const Register = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                // 💡 FIX: Add autocomplete for email
+                autoComplete="email"
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="you@example.com"
                 disabled={loading}
@@ -172,6 +176,8 @@ const Register = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
+                // 💡 FIX: Add autocomplete for new password
+                autoComplete="password"
                 className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 placeholder="••••••••"
                 disabled={loading}
