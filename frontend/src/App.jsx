@@ -8,6 +8,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Tasks from './pages/Tasks';
 import NotFound from './pages/NotFound';
+import 'react-datepicker/dist/react-datepicker.css';
 // Assuming you will create these components soon:
 // import Tasks from './pages/Tasks';
 // import Projects from './pages/Projects';

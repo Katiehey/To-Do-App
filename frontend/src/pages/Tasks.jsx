@@ -1,34 +1,78 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
-import { useEffect } from 'react';
+import { LogOut, User, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useTask } from '../context/TaskContext';
+import TaskStats from '../components/tasks/TaskStats';
+import TaskList from '../components/tasks/TaskList';
+import AddTaskModal from '../components/tasks/AddTaskModal';
 
 const Tasks = () => {
   const { user, logout } = useAuth();
-  const { tasks, fetchTasks, createTask, loading } = useTask();
+  const { tasks, fetchTasks, createTask, loading, updateTask, deleteTask, toggleTask } = useTask();
   const navigate = useNavigate();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  // Temporary test function
-  const testCreate = async () => {
-    const result = await createTask({
-      title: 'Test from Frontend',
-      priority: 'high',
-      description: 'Created via React context',
-    });
-    console.log('Created:', result);
-    await fetchTasks(); // refresh list
-  };
-
   // Fetch tasks on mount
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const handleOpenModal = () => {
+    setEditingTask(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setEditingTask(null);
+    setIsModalOpen(false);
+  };
+
+  const handleAddTask = async (taskData) => {
+    const result = await createTask(taskData);
+    if (result.success) {
+      await fetchTasks(); // Refresh list
+      setIsModalOpen(false);
+    }
+    return result;
+  };
+
+  const handleEditTask = (task) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleUpdateTask = async (taskData) => {
+    const result = await updateTask(editingTask._id, taskData);
+    if (result.success) {
+      await fetchTasks(); // Refresh list
+      setIsModalOpen(false);
+    }
+    return result;
+  };
+
+  const handleDeleteTask = async (id) => {
+    const result = await deleteTask(id);
+    if (result.success) {
+      await fetchTasks(); // Refresh list
+    }
+    return result;
+  };
+
+  const handleToggleTask = async (id) => {
+    const result = await toggleTask(id);
+    if (result.success) {
+      await fetchTasks(); // Refresh list
+    }
+    return result;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -44,46 +88,52 @@ const Tasks = () => {
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
           </div>
+          {/* Logout button (optional) */}
+          {/* <button
+            onClick={handleLogout}
+            className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition duration-150 text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </button> */}
         </div>
 
-        {/* Tasks */}
+        {/* Tasks Section */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Tasks</h2>
-
-          {/* Temporary test button */}
-          <button
-            onClick={testCreate}
-            className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-          >
-            Test Create Task
-          </button>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">Your Tasks</h2>
+            {/* Add Task Button */}
+            <button
+              onClick={handleOpenModal}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-150 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Task
+            </button>
+          </div>
 
           {loading ? (
             <p>Loading tasks...</p>
           ) : tasks.length === 0 ? (
             <p className="text-gray-500">No tasks found.</p>
           ) : (
-            <ul className="space-y-2 mt-4">
-              {tasks.map((task) => (
-                <li
-                  key={task._id}
-                  className="p-3 border rounded-md flex flex-col"
-          >
-                  <div className="flex justify-between">
-                    <span className="font-semibold">
-                      {task.title} – {task.priority}
-                    </span>
-                    <span>{task.completed ? '✅ Completed' : '❌ Pending'}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {task.description || 'No description provided'}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <TaskList
+              tasks={tasks}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+              onToggle={handleToggleTask}
+            />
           )}
         </div>
       </div>
+
+      {/* Add/Edit Task Modal */}
+      <AddTaskModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={editingTask ? handleUpdateTask : handleAddTask}
+        initialTask={editingTask}
+      />
     </div>
   );
 };
