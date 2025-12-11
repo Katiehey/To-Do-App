@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TaskProvider } from './context/TaskContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
@@ -19,6 +20,7 @@ function App() {
     <Router>
       {/* 🛑 FIX: Wrap your entire application logic with the AuthProvider */}
       <AuthProvider>
+        <TaskProvider>
       {/* 2. Routes component defines the routing area */}
       <Routes>
         {/* Public Routes (Full Screen, no Layout wrapper) */}
@@ -56,6 +58,7 @@ function App() {
         
         </Route>
       </Routes>
+      </TaskProvider>
       </AuthProvider>
     </Router>
   );
