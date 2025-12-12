@@ -1,7 +1,7 @@
 import { Loader, Inbox } from 'lucide-react';
 import TaskItem from './TaskItem';
 
-const TaskList = ({ tasks, loading, onToggle, onEdit, onDelete }) => {
+const TaskList = ({ tasks, loading, onUpdateStatus, onEdit, onDelete }) => {
   
   // 1. Loading State
   if (loading) {
@@ -35,7 +35,7 @@ const TaskList = ({ tasks, loading, onToggle, onEdit, onDelete }) => {
         <TaskItem
           key={task._id}
           task={task}
-          onToggle={onToggle}
+          onUpdateStatus={onUpdateStatus}   // ✅ updated prop
           onEdit={onEdit}
           onDelete={onDelete}
         />

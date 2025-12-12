@@ -9,6 +9,7 @@ import Register from './components/auth/Register';
 import Tasks from './pages/Tasks';
 import NotFound from './pages/NotFound';
 import 'react-datepicker/dist/react-datepicker.css';
+//import TasksPage from "./pages/TasksPage";
 // Assuming you will create these components soon:
 // import Tasks from './pages/Tasks';
 // import Projects from './pages/Projects';
@@ -34,6 +35,8 @@ function App() {
           
           {/* Default/Index route for the Layout (Home page) */}
           <Route index element={<Home />} />
+
+          
 
           {/* Add protected routes here, e.g., <Route path="/tasks" element={<Tasks />} /> */}
           

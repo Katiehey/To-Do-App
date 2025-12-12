@@ -1,55 +1,55 @@
 import { useState } from 'react';
-import { CheckCircle, Circle, Trash2, Edit2, Calendar, Tag, AlertCircle, Clock } from 'lucide-react';
-// Assuming formatDate and getPriorityColor are correctly defined and imported
+import { Trash2, Edit2, Calendar, Tag, AlertCircle, Clock } from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
+import StatusBadge from './StatusBadge';   // ✅ import reusable badge
 
-const TaskItem = ({ task, onToggle, onEdit, onDelete }) => {
+const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Handlers
-  const handleToggle = async () => {
-    await onToggle(task._id);
+  const handleStatusClick = async () => {
+    // Cycle through statuses (or replace with dropdown logic if preferred)
+    const nextStatusMap = {
+      pending: "in-progress",
+      "in-progress": "completed",
+      completed: "archived",
+      archived: "pending",
+    };
+    const nextStatus = nextStatusMap[task.taskStatus] || "pending";
+    await onUpdateStatus(task._id, nextStatus);
   };
-  
+
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       setIsDeleting(true);
       await onDelete(task._id);
-      // Note: No need to set isDeleting(false) here, as the component will unmount
     }
   };
-  
+
   const handleEdit = () => {
     onEdit(task);
   };
-  
+
   // Derived state/props
   const priorityColor = getPriorityColor(task.priority);
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
-  const isProcessing = isDeleting || task.isUpdating; // Assuming 'isUpdating' might come from context/props
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus !== "completed";
+  const isProcessing = isDeleting || task.isUpdating;
 
   return (
-    <div className={`flex items-start p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition duration-150 ${task.completed ? 'opacity-70' : ''}`}>
+    <div className={`flex items-start p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition duration-150 ${task.taskStatus === "completed" ? 'opacity-70' : ''}`}>
       
-      {/* 1. Checkbox / Toggle */}
-      <button 
-        onClick={handleToggle} 
-        className="flex-shrink-0 mr-3 mt-1 focus:outline-none"
-        aria-label={task.completed ? "Mark as pending" : "Mark as completed"}
-        disabled={isProcessing}
-      >
-        {task.completed ? (
-          <CheckCircle className="w-6 h-6 text-green-500 hover:text-green-600 transition duration-100" fill="currentColor" />
-        ) : (
-          <Circle className="w-6 h-6 text-gray-400 hover:text-gray-500 transition duration-100" />
-        )}
-      </button>
+      {/* 1. Status Badge */}
+      <StatusBadge 
+        status={task.taskStatus} 
+        onClick={handleStatusClick} 
+        disabled={isProcessing} 
+      />
 
       {/* 2. Task Content */}
-      <div className="flex-grow min-w-0">
+      <div className="flex-grow min-w-0 ml-3">
         
         {/* Title */}
-        <h3 className={`text-lg font-semibold text-gray-800 ${task.completed ? 'line-through text-gray-500' : ''}`}>
+        <h3 className={`text-lg font-semibold text-gray-800 ${task.taskStatus === "completed" ? 'line-through text-gray-500' : ''}`}>
           {task.title}
         </h3>
         
@@ -74,8 +74,6 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }) => {
             <span className={`flex items-center ${isOverdue ? 'text-red-500 font-semibold' : ''}`}>
               <Calendar className="w-3 h-3 mr-1" />
               {formatDate(task.dueDate)}
-              
-              {/* Overdue Indicator */}
               {isOverdue && (
                 <Clock className="w-3 h-3 ml-1 text-red-500" title="Overdue" />
               )}
@@ -98,7 +96,7 @@ const TaskItem = ({ task, onToggle, onEdit, onDelete }) => {
           {/* Project */}
           {task.project && (
             <span className="flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1 text-blue-500" />
+              <AlertCircle className="w-3 h-3 mr-1 text-blue-500" />
               {task.project.name}
             </span>
           )}

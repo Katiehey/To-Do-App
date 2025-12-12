@@ -1,5 +1,6 @@
 import { useTaskStats } from '../../hooks/useTaskStats';
-import { CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Archive, Loader } from 'lucide-react';
+import StatusBadge from './StatusBadge';   // ✅ reuse badge styling
 
 const TaskStats = () => {
   const { stats, loading, error } = useTaskStats();
@@ -28,7 +29,6 @@ const TaskStats = () => {
 
   // Handle case where stats data is missing or empty
   if (!stats || !stats.overall || stats.overall.length === 0) {
-    // If no stats are available but no error, return a placeholder or null
     return (
       <div className="p-4 text-gray-500 text-center border rounded-md">
         No task data available to calculate statistics.
@@ -36,8 +36,14 @@ const TaskStats = () => {
     );
   }
 
-  // Destructure and calculate statistics
-  const overall = stats.overall[0] || { total: 0, completed: 0, pending: 0 };
+  // Destructure unified stats
+  const overall = stats.overall[0] || { 
+    total: 0, 
+    pending: 0, 
+    "in-progress": 0, 
+    completed: 0, 
+    archived: 0 
+  };
   
   const completionRate = overall.total > 0
     ? Math.round((overall.completed / overall.total) * 100)
@@ -45,58 +51,61 @@ const TaskStats = () => {
 
   // Render Stats Cards
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
       
       {/* 1. Total Tasks */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 truncate">
-            Total Tasks
-          </p>
-          <p className="mt-1 text-3xl font-semibold text-gray-900">
-            {overall.total || 0}
-          </p>
+          <p className="text-sm font-medium text-gray-500 truncate">Total Tasks</p>
+          <p className="mt-1 text-3xl font-semibold text-gray-900">{overall.total || 0}</p>
         </div>
         <Clock className="w-8 h-8 text-blue-500 p-1.5 bg-blue-100 rounded-full" />
       </div>
 
-      {/* 2. Completed */}
+      {/* 2. Pending */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 truncate">
-            Completed
-          </p>
-          <p className="mt-1 text-3xl font-semibold text-gray-900">
-            {overall.completed || 0}
-          </p>
+          <p className="text-sm font-medium text-gray-500 truncate">Pending</p>
+          <p className="mt-1 text-3xl font-semibold text-gray-900">{overall.pending || 0}</p>
         </div>
-        <CheckCircle className="w-8 h-8 text-green-500 p-1.5 bg-green-100 rounded-full" />
+        <StatusBadge status="pending" /> {/* ✅ consistent badge */}
       </div>
 
-      {/* 3. Pending */}
+      {/* 3. In Progress */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 truncate">
-            Pending
-          </p>
-          <p className="mt-1 text-3xl font-semibold text-gray-900">
-            {overall.pending || 0}
-          </p>
+          <p className="text-sm font-medium text-gray-500 truncate">In Progress</p>
+          <p className="mt-1 text-3xl font-semibold text-gray-900">{overall["in-progress"] || 0}</p>
         </div>
-        <AlertCircle className="w-8 h-8 text-yellow-500 p-1.5 bg-yellow-100 rounded-full" />
+        <StatusBadge status="in-progress" />
       </div>
 
-      {/* 4. Completion Rate */}
+      {/* 4. Completed */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 truncate">
-            Completion Rate
-          </p>
+          <p className="text-sm font-medium text-gray-500 truncate">Completed</p>
+          <p className="mt-1 text-3xl font-semibold text-gray-900">{overall.completed || 0}</p>
+        </div>
+        <StatusBadge status="completed" />
+      </div>
+
+      {/* 5. Archived */}
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 truncate">Archived</p>
+          <p className="mt-1 text-3xl font-semibold text-gray-900">{overall.archived || 0}</p>
+        </div>
+        <StatusBadge status="archived" />
+      </div>
+
+      {/* 6. Completion Rate */}
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex items-center justify-between col-span-1 sm:col-span-2 lg:col-span-5">
+        <div>
+          <p className="text-sm font-medium text-gray-500 truncate">Completion Rate</p>
           <p className={`mt-1 text-3xl font-semibold ${completionRate === 100 ? 'text-green-600' : 'text-blue-600'}`}>
             {completionRate}%
           </p>
         </div>
-        {/* Placeholder Icon for Rate */}
         <Clock className="w-8 h-8 text-purple-500 p-1.5 bg-purple-100 rounded-full" />
       </div>
     </div>

@@ -15,16 +15,18 @@ export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Filters now use unified taskStatus
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 20,
-    completed: undefined,
+    limit: 10,
+    taskStatus: undefined,   // unified status filter
     priority: undefined,
-    status: undefined,
     search: '',
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
+
   const [pagination, setPagination] = useState({
     page: 1,
     pages: 1,
@@ -32,6 +34,7 @@ export const TaskProvider = ({ children }) => {
     count: 0,
   });
 
+  // Fetch tasks with filters
   const fetchTasks = useCallback(async (customFilters = {}) => {
     try {
       setLoading(true);
@@ -57,6 +60,7 @@ export const TaskProvider = ({ children }) => {
     }
   }, [filters]);
 
+  // Create task
   const createTask = async (taskData) => {
     try {
       setError(null);
@@ -70,6 +74,7 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Update task
   const updateTask = async (id, taskData) => {
     try {
       setError(null);
@@ -85,6 +90,7 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Delete task
   const deleteTask = async (id) => {
     try {
       setError(null);
@@ -98,21 +104,23 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
-  const toggleTask = async (id) => {
+  // NEW: Update task status (replaces toggleTask)
+  const updateTaskStatus = async (id, newStatus) => {
     try {
       setError(null);
-      const response = await taskService.toggleTask(id);
+      const response = await taskService.updateTask(id, { taskStatus: newStatus });
       setTasks(prev =>
         prev.map(task => (task._id === id ? response.data.task : task))
       );
       return { success: true, data: response.data.task };
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to toggle task';
+      const message = err.response?.data?.message || 'Failed to update task status';
       setError(message);
       return { success: false, error: message };
     }
   };
 
+  // Filters
   const updateFilters = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
@@ -121,9 +129,8 @@ export const TaskProvider = ({ children }) => {
     setFilters({
       page: 1,
       limit: 20,
-      completed: undefined,
+      taskStatus: undefined,
       priority: undefined,
-      status: undefined,
       search: '',
       sortBy: 'createdAt',
       sortOrder: 'desc',
@@ -140,7 +147,7 @@ export const TaskProvider = ({ children }) => {
     createTask,
     updateTask,
     deleteTask,
-    toggleTask,
+    updateTaskStatus,   // expose unified status updater
     updateFilters,
     clearFilters,
   };

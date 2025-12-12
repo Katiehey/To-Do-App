@@ -1,29 +1,64 @@
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Plus } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTask } from '../context/TaskContext';
 import TaskStats from '../components/tasks/TaskStats';
 import TaskList from '../components/tasks/TaskList';
 import AddTaskModal from '../components/tasks/AddTaskModal';
+import FilterBar from '../components/tasks/FilterBar';
+import Pagination from '../components/common/Pagination';
+import ResultsInfo from '../components/common/ResultsInfo';
 
 const Tasks = () => {
   const { user, logout } = useAuth();
-  const { tasks, fetchTasks, createTask, loading, updateTask, deleteTask, toggleTask } = useTask();
+  const {
+    tasks,
+    loading,
+    filters,
+    pagination,
+    fetchTasks,
+    createTask,
+    updateTask,
+    deleteTask,
+    updateTaskStatus,
+    updateFilters,
+    clearFilters,
+  } = useTask();
+
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+
+  // ✅ Sync page from URL on mount
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const pageFromUrl = parseInt(queryParams.get('page')) || 1;
+    if (pageFromUrl !== filters.page) {
+      updateFilters({ page: pageFromUrl });
+    }
+  }, [location.search]);
+
+  // Fetch tasks whenever filters change
+  useEffect(() => {
+    fetchTasks();
+  }, [
+    fetchTasks,
+    filters.page,
+    filters.limit,
+    filters.taskStatus,
+    filters.priority,
+    filters.search,
+    filters.sortBy,
+    filters.sortOrder,
+  ]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  // Fetch tasks on mount
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
 
   const handleOpenModal = () => {
     setEditingTask(null);
@@ -38,7 +73,7 @@ const Tasks = () => {
   const handleAddTask = async (taskData) => {
     const result = await createTask(taskData);
     if (result.success) {
-      await fetchTasks(); // Refresh list
+      await fetchTasks();
       setIsModalOpen(false);
     }
     return result;
@@ -52,7 +87,7 @@ const Tasks = () => {
   const handleUpdateTask = async (taskData) => {
     const result = await updateTask(editingTask._id, taskData);
     if (result.success) {
-      await fetchTasks(); // Refresh list
+      await fetchTasks();
       setIsModalOpen(false);
     }
     return result;
@@ -61,17 +96,34 @@ const Tasks = () => {
   const handleDeleteTask = async (id) => {
     const result = await deleteTask(id);
     if (result.success) {
-      await fetchTasks(); // Refresh list
+      await fetchTasks();
     }
     return result;
   };
 
-  const handleToggleTask = async (id) => {
-    const result = await toggleTask(id);
+  const handleUpdateStatus = async (id, newStatus) => {
+    const result = await updateTaskStatus(id, newStatus);
     if (result.success) {
-      await fetchTasks(); // Refresh list
+      await fetchTasks();
     }
     return result;
+  };
+
+  const handleFilterChange = (newFilters) => {
+    updateFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
+  };
+
+  // ✅ Update URL when page changes
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= pagination.pages) {
+      updateFilters({ page });
+      navigate(`/tasks?page=${page}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -88,21 +140,12 @@ const Tasks = () => {
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
           </div>
-          {/* Logout button (optional) */}
-          {/* <button
-            onClick={handleLogout}
-            className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition duration-150 text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </button> */}
         </div>
 
         {/* Tasks Section */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800">Your Tasks</h2>
-            {/* Add Task Button */}
             <button
               onClick={handleOpenModal}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-150 text-sm font-medium"
@@ -111,6 +154,19 @@ const Tasks = () => {
               Add Task
             </button>
           </div>
+
+          <FilterBar
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+          />
+
+          <ResultsInfo
+            itemsPerPage={filters.limit}
+            totalCount={pagination.total}
+            currentPage={pagination.page}
+            totalPages={pagination.pages}
+          />
 
           {loading ? (
             <p>Loading tasks...</p>
@@ -121,13 +177,18 @@ const Tasks = () => {
               tasks={tasks}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
-              onToggle={handleToggleTask}
+              onUpdateStatus={handleUpdateStatus}
             />
           )}
+
+          <Pagination
+            currentPage={filters.page}
+            totalPages={pagination.pages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
 
-      {/* Add/Edit Task Modal */}
       <AddTaskModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
