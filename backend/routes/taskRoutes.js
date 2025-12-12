@@ -5,7 +5,7 @@ const {
   createTask,
   updateTask,
   deleteTask,
-  toggleTaskCompletion,
+  toggleTaskStatus,
   getTaskStats,
 } = require('../controllers/taskController');
 const { protect } = require('../middleware/authMiddleware');
@@ -34,6 +34,6 @@ router.route('/:id')
   .delete(deleteTask);
 
 // Toggle completion
-router.patch('/:id/toggle', toggleTaskCompletion);
+router.patch('/:id/toggle', toggleTaskStatus);
 
 module.exports = router;

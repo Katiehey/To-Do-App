@@ -10,9 +10,8 @@ const getTasks = asyncHandler(async (req, res) => {
   const {
     page = 1,
     limit = 20,
-    completed,
+    taskStatus,
     priority,
-    status,
     project,
     tags,
     search,
@@ -24,28 +23,19 @@ const getTasks = asyncHandler(async (req, res) => {
   const query = { user: req.user._id };
 
   // Filters
-  if (completed !== undefined) {
-    query.completed = completed === 'true';
+  if (taskStatus) {
+    query.taskStatus = taskStatus;
   }
-
   if (priority) {
     query.priority = priority;
   }
-
-  if (status) {
-    query.status = status;
-  }
-
   if (project) {
     query.project = project;
   }
-
   if (tags) {
     const tagArray = Array.isArray(tags) ? tags : [tags];
     query.tags = { $in: tagArray };
   }
-
-  // Search in title and description
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: 'i' } },
@@ -67,7 +57,6 @@ const getTasks = asyncHandler(async (req, res) => {
     .limit(parseInt(limit))
     .skip(skip);
 
-  // Get total count for pagination
   const totalTasks = await Task.countDocuments(query);
 
   res.status(200).json({
@@ -76,9 +65,7 @@ const getTasks = asyncHandler(async (req, res) => {
     total: totalTasks,
     page: parseInt(page),
     pages: Math.ceil(totalTasks / parseInt(limit)),
-    data: {
-      tasks,
-    },
+    data: { tasks },
   });
 });
 
@@ -95,18 +82,12 @@ const getTaskById = asyncHandler(async (req, res) => {
     throw new Error('Task not found');
   }
 
-  // Check if task belongs to user
   if (task.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to access this task');
   }
 
-  res.status(200).json({
-    success: true,
-    data: {
-      task,
-    },
-  });
+  res.status(200).json({ success: true, data: { task } });
 });
 
 /**
@@ -118,9 +99,9 @@ const createTask = asyncHandler(async (req, res) => {
   const taskData = {
     ...req.body,
     user: req.user._id,
+    taskStatus: req.body.taskStatus || 'pending',
   };
 
-  // Validate project belongs to user if provided
   if (taskData.project) {
     const project = await Project.findById(taskData.project);
     if (!project || project.user.toString() !== req.user._id.toString()) {
@@ -130,23 +111,16 @@ const createTask = asyncHandler(async (req, res) => {
   }
 
   const task = await Task.create(taskData);
-  
-  // Populate project details
   await task.populate('project', 'name color');
 
-  // Update project task count
   if (task.project) {
-    await Project.findByIdAndUpdate(task.project, {
-      $inc: { taskCount: 1 },
-    });
+    await Project.findByIdAndUpdate(task.project, { $inc: { taskCount: 1 } });
   }
 
   res.status(201).json({
     success: true,
     message: 'Task created successfully',
-    data: {
-      task,
-    },
+    data: { task },
   });
 });
 
@@ -163,40 +137,20 @@ const updateTask = asyncHandler(async (req, res) => {
     throw new Error('Task not found');
   }
 
-  // Check if task belongs to user
   if (task.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to update this task');
   }
 
-  // Track if completion status changed
-  const wasCompleted = task.completed;
-  const isCompleted = req.body.completed !== undefined ? req.body.completed : task.completed;
-
-  // Update task
-  task = await Task.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true,
-    }
-  ).populate('project', 'name color');
-
-  // Update project completion count if needed
-  if (task.project && wasCompleted !== isCompleted) {
-    const increment = isCompleted ? 1 : -1;
-    await Project.findByIdAndUpdate(task.project, {
-      $inc: { completedTaskCount: increment },
-    });
-  }
+  task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  }).populate('project', 'name color');
 
   res.status(200).json({
     success: true,
     message: 'Task updated successfully',
-    data: {
-      task,
-    },
+    data: { task },
   });
 });
 
@@ -213,21 +167,13 @@ const deleteTask = asyncHandler(async (req, res) => {
     throw new Error('Task not found');
   }
 
-  // Check if task belongs to user
   if (task.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to delete this task');
   }
 
-  // Update project task counts
   if (task.project) {
-    const decrement = { taskCount: -1 };
-    if (task.completed) {
-      decrement.completedTaskCount = -1;
-    }
-    await Project.findByIdAndUpdate(task.project, {
-      $inc: decrement,
-    });
+    await Project.findByIdAndUpdate(task.project, { $inc: { taskCount: -1 } });
   }
 
   await task.deleteOne();
@@ -240,11 +186,11 @@ const deleteTask = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Toggle task completion
+ * @desc    Toggle task completion (completed <-> pending)
  * @route   PATCH /api/tasks/:id/toggle
  * @access  Private
  */
-const toggleTaskCompletion = asyncHandler(async (req, res) => {
+const toggleTaskStatus = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
 
   if (!task) {
@@ -252,37 +198,19 @@ const toggleTaskCompletion = asyncHandler(async (req, res) => {
     throw new Error('Task not found');
   }
 
-  // Check if task belongs to user
   if (task.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to update this task');
   }
 
-  // Toggle completion
-  if (task.completed) {
-    await task.markIncomplete();
-    if (task.project) {
-      await Project.findByIdAndUpdate(task.project, {
-        $inc: { completedTaskCount: -1 },
-      });
-    }
-  } else {
-    await task.markCompleted();
-    if (task.project) {
-      await Project.findByIdAndUpdate(task.project, {
-        $inc: { completedTaskCount: 1 },
-      });
-    }
-  }
-
+  task.taskStatus = task.taskStatus === 'completed' ? 'pending' : 'completed';
+  await task.save();
   await task.populate('project', 'name color');
 
   res.status(200).json({
     success: true,
-    message: `Task marked as ${task.completed ? 'completed' : 'incomplete'}`,
-    data: {
-      task,
-    },
+    message: `Task marked as ${task.taskStatus}`,
+    data: { task },
   });
 });
 
@@ -297,46 +225,25 @@ const getTaskStats = asyncHandler(async (req, res) => {
   const stats = await Task.aggregate([
     { $match: { user: userId } },
     {
-      $facet: {
-        byStatus: [
-          {
-            $group: {
-              _id: '$status',
-              count: { $sum: 1 },
-            },
-          },
-        ],
-        byPriority: [
-          {
-            $group: {
-              _id: '$priority',
-              count: { $sum: 1 },
-            },
-          },
-        ],
-        overall: [
-          {
-            $group: {
-              _id: null,
-              total: { $sum: 1 },
-              completed: {
-                $sum: { $cond: ['$completed', 1, 0] },
-              },
-              pending: {
-                $sum: { $cond: [{ $eq: ['$completed', false] }, 1, 0] },
-              },
-            },
-          },
-        ],
+      $group: {
+        _id: '$taskStatus',
+        count: { $sum: 1 },
       },
     },
   ]);
 
+  const overall = stats.reduce(
+    (acc, s) => {
+      acc.total += s.count;
+      acc[s._id] = s.count;
+      return acc;
+    },
+    { total: 0, pending: 0, 'in-progress': 0, completed: 0, archived: 0 }
+  );
+
   res.status(200).json({
     success: true,
-    data: {
-      stats: stats[0],
-    },
+    data: { stats: { overall: [overall], byStatus: stats } },
   });
 });
 
@@ -346,6 +253,6 @@ module.exports = {
   createTask,
   updateTask,
   deleteTask,
-  toggleTaskCompletion,
+  toggleTaskStatus,
   getTaskStats,
 };
