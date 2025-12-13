@@ -1,8 +1,15 @@
 import { Loader, Inbox } from 'lucide-react';
 import TaskItem from './TaskItem';
 
-const TaskList = ({ tasks, loading, onUpdateStatus, onEdit, onDelete }) => {
-  
+const TaskList = ({
+  tasks,
+  loading,
+  onUpdateStatus,
+  onEdit,
+  onDelete,
+  selectedTasks = [],   // ✅ new prop
+  onSelect,             // ✅ new prop
+}) => {
   // 1. Loading State
   if (loading) {
     return (
@@ -31,13 +38,15 @@ const TaskList = ({ tasks, loading, onUpdateStatus, onEdit, onDelete }) => {
   // 3. Render List
   return (
     <div className="space-y-4">
-      {tasks.map(task => (
+      {tasks.map((task) => (
         <TaskItem
           key={task._id}
           task={task}
-          onUpdateStatus={onUpdateStatus}   // ✅ updated prop
+          onUpdateStatus={onUpdateStatus}
           onEdit={onEdit}
           onDelete={onDelete}
+          isSelected={selectedTasks.includes(task._id)} // ✅ selection state
+          onSelect={onSelect}                           // ✅ selection handler
         />
       ))}
     </div>

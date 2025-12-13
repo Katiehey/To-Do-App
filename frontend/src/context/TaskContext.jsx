@@ -16,6 +16,9 @@ export const TaskProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ✅ Bulk selection state
+  const [selectedTasks, setSelectedTasks] = useState([]);
+
   // Filters now use unified taskStatus
   const [filters, setFilters] = useState({
     page: 1,
@@ -128,7 +131,7 @@ export const TaskProvider = ({ children }) => {
   const clearFilters = () => {
     setFilters({
       page: 1,
-      limit: 20,
+      limit: 10,
       taskStatus: undefined,
       priority: undefined,
       search: '',
@@ -137,19 +140,71 @@ export const TaskProvider = ({ children }) => {
     });
   };
 
+  // ✅ Bulk selection functions
+  const toggleSelectTask = (taskId) => {
+    setSelectedTasks(prev =>
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const selectAllTasks = () => {
+    setSelectedTasks(tasks.map(task => task._id));
+  };
+
+  const clearSelection = () => {
+    setSelectedTasks([]);
+  };
+
+  const bulkDeleteTasks = async (taskIds) => {
+    try {
+      setError(null);
+      await Promise.all(taskIds.map(id => taskService.deleteTask(id)));
+      setTasks(prev => prev.filter(task => !taskIds.includes(task._id)));
+      clearSelection();
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to delete tasks';
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const bulkUpdateTasks = async (taskIds, updates) => {
+    try {
+      setError(null);
+      await Promise.all(taskIds.map(id => taskService.updateTask(id, updates)));
+      await fetchTasks();
+      clearSelection();
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to update tasks';
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
+  // ✅ Updated value object
   const value = {
     tasks,
     loading,
     error,
     filters,
     pagination,
+    selectedTasks,
     fetchTasks,
     createTask,
     updateTask,
     deleteTask,
-    updateTaskStatus,   // expose unified status updater
+    updateTaskStatus,
     updateFilters,
     clearFilters,
+    toggleSelectTask,
+    selectAllTasks,
+    clearSelection,
+    bulkDeleteTasks,
+    bulkUpdateTasks,
   };
 
   return (

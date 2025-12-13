@@ -9,6 +9,10 @@ import AddTaskModal from '../components/tasks/AddTaskModal';
 import FilterBar from '../components/tasks/FilterBar';
 import Pagination from '../components/common/Pagination';
 import ResultsInfo from '../components/common/ResultsInfo';
+import BulkActionsBar from '../components/tasks/BulkActionsBar';
+import ViewModeSwitcher from '../components/tasks/ViewModeSwitcher';
+import CompactTaskItem from '../components/tasks/CompactTaskItem';
+import KeyboardShortcuts from '../components/tasks/KeyboardShortcuts';
 
 const Tasks = () => {
   const { user, logout } = useAuth();
@@ -24,6 +28,12 @@ const Tasks = () => {
     updateTaskStatus,
     updateFilters,
     clearFilters,
+    selectedTasks,
+    toggleSelectTask,
+    selectAllTasks,
+    clearSelection,
+    bulkDeleteTasks,
+    bulkUpdateTasks,
   } = useTask();
 
   const navigate = useNavigate();
@@ -31,6 +41,7 @@ const Tasks = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // ✅ new state for view mode
 
   // ✅ Sync page from URL on mount
   useEffect(() => {
@@ -119,12 +130,12 @@ const Tasks = () => {
 
   // ✅ Update URL when page changes
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= pagination.pages) {
-      updateFilters({ page });
-      navigate(`/tasks?page=${page}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  if (page >= 1 && page <= pagination.pages) {
+    navigate(`/tasks?page=${page}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -146,13 +157,16 @@ const Tasks = () => {
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-gray-800">Your Tasks</h2>
-            <button
-              onClick={handleOpenModal}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-150 text-sm font-medium"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Task
-            </button>
+            <div className="flex items-center space-x-3">
+              <ViewModeSwitcher currentView={viewMode} onViewChange={setViewMode} />
+              <button
+                onClick={handleOpenModal}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition duration-150 text-sm font-medium"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </button>
+            </div>
           </div>
 
           <FilterBar
@@ -172,13 +186,31 @@ const Tasks = () => {
             <p>Loading tasks...</p>
           ) : tasks.length === 0 ? (
             <p className="text-gray-500">No tasks found.</p>
-          ) : (
+          ) : viewMode === 'list' ? (
             <TaskList
               tasks={tasks}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
               onUpdateStatus={handleUpdateStatus}
+              selectedTasks={selectedTasks}
+              onSelect={toggleSelectTask}
             />
+          ) : (
+            <div className="space-y-2">
+              {tasks.map((task) => (
+                <CompactTaskItem
+                  key={task._id}
+                  task={task}
+                  onToggle={(id) =>
+                    updateTaskStatus(id, task.taskStatus === 'completed' ? 'pending' : 'completed')
+                  }
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  isSelected={selectedTasks.includes(task._id)}
+                  onSelect={toggleSelectTask}
+                />
+              ))}
+            </div>
           )}
 
           <Pagination
@@ -195,6 +227,34 @@ const Tasks = () => {
         onSubmit={editingTask ? handleUpdateTask : handleAddTask}
         initialTask={editingTask}
       />
+
+      {/* ✅ Bulk Actions Bar */}
+      <BulkActionsBar
+        selectedCount={selectedTasks.length}
+        onMarkComplete={() => bulkUpdateTasks(selectedTasks, { taskStatus: 'completed' })}
+        onMarkIncomplete={() => bulkUpdateTasks(selectedTasks, { taskStatus: 'pending' })}
+        onDelete={() => bulkDeleteTasks(selectedTasks)}
+        onClear={clearSelection}
+        onSelectAll={() => {
+          if (selectedTasks.length === tasks.length) {
+            clearSelection();   // ✅ toggle: deselect all
+          } else {
+            selectAllTasks();   // ✅ select all
+          }
+        }}
+      />
+
+      {/* ✅ Keyboard Shortcuts */}
+      <KeyboardShortcuts
+        onNewTask={handleOpenModal}
+        onFocusSearch={() => {
+          const searchInput = document.querySelector('#task-search'); // give your search input an id
+          searchInput?.focus();
+        }}
+        onSelectAll={selectAllTasks}
+        onClearSelection={clearSelection}
+      />
+
     </div>
   );
 };

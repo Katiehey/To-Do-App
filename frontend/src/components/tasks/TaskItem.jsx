@@ -3,12 +3,12 @@ import { Trash2, Edit2, Calendar, Tag, AlertCircle, Clock } from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
 import StatusBadge from './StatusBadge';   // ✅ import reusable badge
 
-const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete }) => {
+// Added props: isSelected, onSelect
+const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Handlers
   const handleStatusClick = async () => {
-    // Cycle through statuses (or replace with dropdown logic if preferred)
     const nextStatusMap = {
       pending: "in-progress",
       "in-progress": "completed",
@@ -38,6 +38,14 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete }) => {
   return (
     <div className={`flex items-start p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition duration-150 ${task.taskStatus === "completed" ? 'opacity-70' : ''}`}>
       
+      {/* 0. Selection Checkbox */}
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => onSelect(task._id)}
+        className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+      />
+
       {/* 1. Status Badge */}
       <StatusBadge 
         status={task.taskStatus} 
