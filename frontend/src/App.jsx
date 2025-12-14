@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { TaskProvider } from './context/TaskContext';
+import { ProjectProvider } from './context/ProjectContext';
+import Projects from './components/projects/Projects';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
@@ -23,6 +25,7 @@ function App() {
       {/* 🛑 FIX: Wrap your entire application logic with the AuthProvider */}
       <AuthProvider>
         <TaskProvider>
+          <ProjectProvider>
       {/* 2. Routes component defines the routing area */}
       <Routes>
         {/* Public Routes (Full Screen, no Layout wrapper) */}
@@ -50,6 +53,15 @@ function App() {
               } 
             />
 
+          {/* ✅ Projects */}
+                <Route
+                  path="/projects"
+                  element={
+                    <ProtectedRoute>
+                      <Projects />
+                    </ProtectedRoute>
+                  }
+                />  
 
           {/* Placeholder Routes (Uncomment/Add components when ready) */}
           {/* <Route path="/tasks" element={<Tasks />} /> */}
@@ -62,6 +74,7 @@ function App() {
         
         </Route>
       </Routes>
+      </ProjectProvider>
       </TaskProvider>
       </AuthProvider>
     </Router>

@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useProject } from '../../context/ProjectContext';
 import { X, Tag, AlertTriangle, Loader } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { PRIORITY_LEVELS } from '../../utils/constants';
 
 const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
+  const { projects, fetchProjects } = useProject();
+
+  // Fetch projects on mount
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     priority: 'medium',
     dueDate: null, // store as JS Date
     tags: '',
+    project: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,6 +31,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
         priority: initialTask.priority || 'medium',
         dueDate: initialTask.dueDate ? new Date(initialTask.dueDate) : null,
         tags: Array.isArray(initialTask.tags) ? initialTask.tags.join(', ') : '',
+        project: initialTask.project?._id || '',
       });
     } else {
       resetForm();
@@ -35,6 +45,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
       priority: 'medium',
       dueDate: null,
       tags: '',
+      project: projects.find(p => p.isDefault)?._id || null,
     });
     setError('');
   };
@@ -52,6 +63,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
       setError('Title is required');
       return;
     }
+
+    
 
     setLoading(true);
     setError('');
@@ -71,6 +84,10 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
         .split(',')
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
+    }
+
+    if (formData.project) {
+      taskData.project = formData.project;
     }
 
     const result = await onSubmit(taskData);
@@ -214,6 +231,37 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
             </div>
             <p className="mt-1 text-xs text-gray-500">Separate tags with commas</p>
           </div>
+
+          {/* Project Field - Integrated */}
+        <div>
+            <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-1">
+                Project
+            </label>
+            <select
+                id="project"
+                name="project"
+                value={formData.project || ''} // Use empty string for null selection
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-500 focus:ring-blue-500 focus:border-blue-500"
+            >
+                <option value="" disabled>Select a Project</option>
+                
+                {/* Find the default project ID if available */}
+                {projects.filter(p => !p.isArchived).map(project => (
+                    <option key={project._id} value={project._id}>
+                        {project.icon} {project.name}
+                        {project.isDefault && " (Default)"}
+                    </option>
+                ))}
+            </select>
+            
+            {/* Display current default project name as a hint if no project is selected */}
+            {!formData.projectId && (
+                <p className="mt-1 text-xs text-gray-500">
+                    Currently set to: **{projects.find(p => p.isDefault)?.name || "No Default Project"}**
+                </p>
+            )}
+        </div>
 
           {/* Actions */}
           <div className="flex justify-end pt-4 space-x-3 border-t border-gray-100">
