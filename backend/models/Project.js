@@ -20,7 +20,7 @@ const projectSchema = new mongoose.Schema(
     },
     icon: {
       type: String,
-      default: 'folder',
+      default: '',
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
