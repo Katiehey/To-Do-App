@@ -36,6 +36,17 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
+    // Create default project for new user
+    const { Project } = require('../models');
+    await Project.create({
+      name: 'Personal',
+      description: 'Default project for personal tasks',
+      color: '#3B82F6',
+      icon: 'home',
+      user: user._id,
+      isDefault: true,
+    });
+
     // Generate token
     const token = generateToken(user._id);
 

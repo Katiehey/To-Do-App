@@ -1,0 +1,49 @@
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN_HERE
+
+### Get All Projects
+GET {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+
+### Get Projects (Including Archived)
+GET {{baseUrl}}/projects?includeArchived=true
+Authorization: Bearer {{token}}
+
+### Create Project
+POST {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Side Projects",
+  "description": "Personal side projects and experiments",
+  "color": "#8B5CF6",
+  "icon": "rocket"
+}
+
+### Get Single Project
+GET {{baseUrl}}/projects/PROJECT_ID_HERE
+Authorization: Bearer {{token}}
+
+### Update Project
+PUT {{baseUrl}}/projects/PROJECT_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Project Name",
+  "description": "Updated description",
+  "color": "#6366F1"
+}
+
+### Get Project Statistics
+GET {{baseUrl}}/projects/PROJECT_ID_HERE/stats
+Authorization: Bearer {{token}}
+
+### Archive Project
+PATCH {{baseUrl}}/projects/PROJECT_ID_HERE/archive
+Authorization: Bearer {{token}}
+
+### Delete Project
+DELETE {{baseUrl}}/projects/PROJECT_ID_HERE
+Authorization: Bearer {{token}}

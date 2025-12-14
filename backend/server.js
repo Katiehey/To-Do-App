@@ -81,6 +81,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 // Test routes
 app.use('/api/test', require('./routes/testRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
 
 // 404 handler
 app.use('/*splat', (req, res) => {

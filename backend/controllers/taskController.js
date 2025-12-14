@@ -102,6 +102,18 @@ const createTask = asyncHandler(async (req, res) => {
     taskStatus: req.body.taskStatus || 'pending',
   };
 
+  // If no project specified, use default project
+  if (!taskData.project) {
+    const defaultProject = await Project.findOne({
+      user: req.user._id,
+      isDefault: true,
+    });
+    
+    if (defaultProject) {
+      taskData.project = defaultProject._id;
+    }
+  }
+
   if (taskData.project) {
     const project = await Project.findById(taskData.project);
     if (!project || project.user.toString() !== req.user._id.toString()) {
