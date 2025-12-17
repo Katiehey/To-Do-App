@@ -762,3 +762,82 @@ PATCH  /api/projects/:id/archive  → Toggle archive status
 7. Go to tasks
 8. Create task → Select project
 9. Task shows project badge
+
+
+## ✅ Session 15 Complete!
+
+### What was accomplished:
+✓ Project sidebar with all projects
+✓ Active project indicator
+✓ Project quick stats banner
+✓ Filter tasks by project
+✓ Mobile drawer for sidebar
+✓ Project badges on tasks
+✓ Active route highlighting
+✓ Create project from sidebar
+
+### Components Created:
+
+**ProjectSidebar:**
+- ✅ All tasks option
+- ✅ Project list with icons
+- ✅ Pending task count badges
+- ✅ Active project highlight
+- ✅ Archived projects section (collapsible)
+- ✅ Create project button
+- ✅ Mobile drawer with overlay
+
+**ProjectQuickStats:**
+- ✅ Project-colored gradient background
+- ✅ Project icon and name
+- ✅ 4 statistics: Total, Done, Pending, Progress
+- ✅ Progress bar
+- ✅ Special "All Tasks" view
+
+**Task Integration:**
+- ✅ Project badge on task cards
+- ✅ Color-coded backgrounds
+- ✅ Project icon display
+- ✅ Automatic filtering
+
+### User Experience:
+
+**Desktop:**
+```
+┌─────────────┬──────────────────────────┐
+│             │  📊 Project Stats        │
+│  Projects   │  ────────────────────    │
+│  ─────────  │                          │
+│  📁 All     │  🔍 Filters              │
+│  💼 Work    │  ─────────────           │
+│  📚 Learn   │                          │
+│  🏠 Home    │  ✅ Task List            │
+│             │  ─────────────           │
+│  + New      │  [ ] Task 1 [Work]       │
+│             │  [ ] Task 2 [Learn]      │
+└─────────────┴──────────────────────────┘
+```
+
+**Mobile:**
+```
+┌──────────────────────────┐
+│  📊 Project Stats        │
+│                          │
+│  🔍 Filters              │
+│                          │
+│  ✅ Task List            │
+│  [ ] Task 1 [Work]       │
+│  [ ] Task 2 [Learn]      │
+│                          │
+│  [≡] ← Sidebar Button   │
+└──────────────────────────┘
+```
+
+### Features:
+- ✅ Click project → Tasks filter automatically
+- ✅ Stats update based on active project
+- ✅ Pending count shows next to each project
+- ✅ Mobile: Hamburger opens full-screen drawer
+- ✅ Create project without leaving tasks page
+- ✅ Visual feedback for active project
+- ✅ Archived projects hidden by default
