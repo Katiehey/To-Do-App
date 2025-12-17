@@ -29,7 +29,8 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
   const hasActiveFilters =
     filters.search ||
     filters.priority ||
-    filters.taskStatus;   // ✅ unified status filter
+    filters.taskStatus ||
+    filters.project; // 👇 UPDATED: Check for project filter
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-100">
@@ -142,9 +143,10 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
               <button
                 onClick={() => {
                   setSearchInput('');
-                  handleFilterChange('search', '');
+                  handleFilterChange('search', undefined);
                 }}
                 className="ml-2 text-blue-600 hover:text-blue-900"
+                aria-label="Remove search filter"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -158,6 +160,7 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
               <button
                 onClick={() => handleFilterChange('priority', undefined)}
                 className="ml-2 text-purple-600 hover:text-purple-900"
+                aria-label="Remove priority filter"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -171,6 +174,21 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
               <button
                 onClick={() => handleFilterChange('taskStatus', undefined)}
                 className="ml-2 text-orange-600 hover:text-orange-900"
+                aria-label="Remove status filter"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </span>
+          )}
+          
+          {/* 👇 NEW: Project Filter Tag */}
+          {filters.project && (
+            <span className="flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+              Project Filter Active
+              <button
+                onClick={() => handleFilterChange('project', undefined)}
+                className="ml-2 text-indigo-600 hover:text-indigo-900"
+                aria-label="Remove project filter"
               >
                 <X className="w-4 h-4" />
               </button>

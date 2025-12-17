@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, CheckSquare, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -6,13 +6,30 @@ import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
   // Destructuring all necessary values from the context
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
+  // 👇 ADDED: Get current location and helper function
+  const location = useLocation();
+  const isActive = (path) => location.pathname === path;
+
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const getLinkClasses = (path, isMobile = false) => {
+      const baseClasses = isMobile ? 'block px-3 py-2 rounded-md font-medium' : 'px-3 py-2 rounded-md font-medium';
+      
+      if (isActive(path)) {
+          return `${baseClasses} bg-blue-100 text-blue-700`; // Active style
+      }
+      if (isMobile) {
+          return `${baseClasses} text-gray-700 hover:bg-gray-100`; // Mobile hover style
+      }
+      return `${baseClasses} text-gray-700 hover:text-blue-600`; // Desktop hover style
   };
 
   return (
@@ -34,31 +51,37 @@ const Navbar = () => {
               {isAuthenticated ? (
                 // User is LOGGED IN: Dashboard Links + User Info/Logout
                 <>
-                  <Link to="/tasks" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">
+                  {/* 👇 UPDATED: Active style applied */}
+                  <Link to="/tasks" className={getLinkClasses('/tasks')}>
                     Tasks
                   </Link>
-                  <Link to="/projects" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">
+                  {/* 👇 UPDATED: Active style applied */}
+                  <Link to="/projects" className={getLinkClasses('/projects')}>
                     Projects
                   </Link>
-                  <Link to="/calendar" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">
+                  {/* Applying active style, assuming /calendar is the path */}
+                  <Link to="/calendar" className={getLinkClasses('/calendar')}>
                     Calendar
                   </Link>
+                  
                   {/* User Name */}
                   <span className="text-gray-700 font-medium px-3 py-2 rounded-md">
                     {user?.name}
                   </span>
+                  
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
                     className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600"
                   >
+                    <LogOut className="inline h-4 w-4 mr-1.5" />
                     Logout
                   </button>
                 </>
               ) : (
                 // User is LOGGED OUT: Login + Sign up Links
                 <>
-                  <Link to="/login" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">
+                  <Link to="/login" className={getLinkClasses('/login')}>
                     Login
                   </Link>
                   <Link to="/register" className="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
@@ -90,27 +113,31 @@ const Navbar = () => {
             {isAuthenticated ? (
               // Mobile - User LOGGED IN
               <>
+                {/* 👇 UPDATED: Active style applied */}
                 <Link
                   to="/tasks"
-                  className="block text-gray-700 hover:bg-blue-50 px-3 py-2 rounded-md font-medium"
+                  className={getLinkClasses('/tasks', true)}
                   onClick={() => setIsOpen(false)}
                 >
                   Tasks
                 </Link>
+                {/* 👇 UPDATED: Active style applied */}
                 <Link
                   to="/projects"
-                  className="block text-gray-700 hover:bg-blue-50 px-3 py-2 rounded-md font-medium"
+                  className={getLinkClasses('/projects', true)}
                   onClick={() => setIsOpen(false)}
                 >
                   Projects
                 </Link>
+                {/* Applying active style, assuming /calendar is the path */}
                 <Link
                   to="/calendar"
-                  className="block text-gray-700 hover:bg-blue-50 px-3 py-2 rounded-md font-medium"
+                  className={getLinkClasses('/calendar', true)}
                   onClick={() => setIsOpen(false)}
                 >
                   Calendar
                 </Link>
+                
                 {/* User Name and Logout are grouped */}
                 <div className="pt-2 border-t border-gray-100">
                   <span className="block text-sm text-gray-700 px-3 py-2">
@@ -133,7 +160,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="block text-gray-700 hover:bg-blue-50 px-3 py-2 rounded-md font-medium"
+                  className={getLinkClasses('/login', true)}
                   onClick={() => setIsOpen(false)}
                 >
                   Login

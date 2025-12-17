@@ -32,6 +32,13 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
     { name: 'Rocket', value: '🚀' },
     { name: 'Light', value: '💡' },
     { name: 'Target', value: '🎯' },
+    { name: 'Music', value: '🎵' },
+    { name: 'Fitness', value: '🏋️‍♂️' },
+    { name: 'Travel', value: '✈️' },
+    { name: 'Food', value: '🍔' },
+    { name: 'Shopping', value: '🛒' },
+    { name: 'Business', value: '🏪' },
+    { name: 'Money', value: '💵' },
   ];
 
   const resetForm = () => {
