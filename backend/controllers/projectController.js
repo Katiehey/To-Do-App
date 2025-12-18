@@ -8,23 +8,39 @@ const { Project, Task } = require('../models');
  */
 const getProjects = asyncHandler(async (req, res) => {
   const { includeArchived = false } = req.query;
-
   const query = { user: req.user._id };
-  
+
   if (!includeArchived || includeArchived === 'false') {
     query.isArchived = false;
   }
 
   const projects = await Project.find(query).sort({ createdAt: -1 });
 
+  // Enrich with task counts
+  const enrichedProjects = await Promise.all(
+    projects.map(async (project) => {
+      const totalTasks = await Task.countDocuments({ project: project._id });
+      const completedTasks = await Task.countDocuments({
+        project: project._id,
+        taskStatus: 'completed',
+      });
+      return {
+        ...project.toObject(),
+        taskCount: totalTasks,
+        completedTaskCount: completedTasks,
+      };
+    })
+  );
+
   res.status(200).json({
     success: true,
-    count: projects.length,
+    count: enrichedProjects.length,
     data: {
-      projects,
+      projects: enrichedProjects,
     },
   });
 });
+
 
 /**
  * @desc    Get single project by ID
@@ -202,7 +218,7 @@ const getProjectStats = asyncHandler(async (req, res) => {
         byStatus: [
           {
             $group: {
-              _id: '$status',
+              _id: '$taskStatus',
               count: { $sum: 1 },
             },
           },
@@ -213,10 +229,10 @@ const getProjectStats = asyncHandler(async (req, res) => {
               _id: null,
               total: { $sum: 1 },
               completed: {
-                $sum: { $cond: ['$completed', 1, 0] },
+                $sum: { $cond: [{ $eq: ['$taskStatus', 'completed'] }, 1, 0] },
               },
               pending: {
-                $sum: { $cond: [{ $eq: ['$completed', false] }, 1, 0] },
+                $sum: { $cond: [{ $eq: ['$taskStatus', 'pending'] }, 1, 0] },
               },
             },
           },
@@ -224,6 +240,8 @@ const getProjectStats = asyncHandler(async (req, res) => {
       },
     },
   ]);
+ 
+  console.log('Stats aggregation result:', stats);
 
   res.status(200).json({
     success: true,
