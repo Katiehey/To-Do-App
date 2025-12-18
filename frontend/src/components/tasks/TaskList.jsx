@@ -8,7 +8,7 @@ const TaskList = ({
   onEdit,
   onDelete,
   selectedTasks = [],   // ✅ new prop
-  onSelect,             // ✅ new prop
+  onSelectTask,             // ✅ new prop
 }) => {
   // 1. Loading State
   if (loading) {
@@ -45,8 +45,8 @@ const TaskList = ({
           onUpdateStatus={onUpdateStatus}
           onEdit={onEdit}
           onDelete={onDelete}
-          isSelected={selectedTasks.includes(task._id)} // ✅ selection state
-          onSelect={onSelect}                           // ✅ selection handler
+          isSelected={selectedTasks.includes(String(task._id))} // ✅ selection state
+          onSelectTask={onSelectTask}                           // ✅ selection handler
         />
       ))}
     </div>

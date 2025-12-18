@@ -53,6 +53,8 @@ export const TaskProvider = ({ children }) => {
         count: response.count,
       });
 
+      //setSelectedTasks([]);
+
       return { success: true, data: response.data.tasks };
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to fetch tasks';
@@ -140,18 +142,21 @@ export const TaskProvider = ({ children }) => {
     });
   };
 
-  // ✅ Bulk selection functions
-  const toggleSelectTask = (taskId) => {
-    setSelectedTasks(prev =>
-      prev.includes(taskId)
-        ? prev.filter(id => id !== taskId)
-        : [...prev, taskId]
-    );
-  };
+  // ✅ Toggle selection with normalized IDs
+const toggleSelectTask = (taskId) => {
+  const id = String(taskId);
+  setSelectedTasks(prev =>
+    prev.includes(id)
+      ? prev.filter(tid => tid !== id)
+      : [...prev, id]
+  );
+};
 
-  const selectAllTasks = () => {
-    setSelectedTasks(tasks.map(task => task._id));
-  };
+// ✅ Select all using normalized IDs
+const selectAllTasks = () => {
+  setSelectedTasks(tasks.map(task => String(task._id)));
+};
+
 
   const clearSelection = () => {
     setSelectedTasks([]);

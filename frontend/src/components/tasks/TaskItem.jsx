@@ -10,7 +10,7 @@ const getProjectColorStyle = (color) => {
     : { backgroundColor: '#3B82F6', color: '#ffffff' }; // Default blue
 };
 
-const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect }) => {
+const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelectTask }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleStatusClick = async () => {
@@ -53,7 +53,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => onSelect(task._id)}
+            onChange={() => onSelectTask(task._id)}
             className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
           />
           <StatusBadge

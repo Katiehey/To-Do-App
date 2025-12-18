@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useProject } from '../../context/ProjectContext';
-import { Plus, Loader } from 'lucide-react';
+import { Plus, Loader, X } from 'lucide-react';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
+import ProjectAnalytics from './ProjectAnalytics';
+import ProjectSettings from './ProjectSettings'; // ✅ Added specific import
 
 const Projects = () => {
   const {
@@ -15,14 +17,19 @@ const Projects = () => {
     toggleArchive,
   } = useProject();
 
+  // Existing Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [selectedProjectForAnalytics, setSelectedProjectForAnalytics] = useState(null);
+  
+  // ✅ Added settings state per your request
+  const [settingsProject, setSettingsProject] = useState(null);
 
   useEffect(() => {
-    // Fetch projects on component mount
     fetchProjects();
-  }, [fetchProjects]); // Dependency includes fetchProjects for safety, though it's assumed stable from context
+  }, [fetchProjects]);
 
+  // --- Existing Handlers ---
   const handleOpenModal = () => {
     setEditingProject(null);
     setIsModalOpen(true);
@@ -35,10 +42,7 @@ const Projects = () => {
 
   const handleAddProject = async (projectData) => {
     const result = await createProject(projectData);
-    if (result.success) {
-      // Re-fetch to update the list, especially if new task is out of current view
-      await fetchProjects();
-    }
+    if (result.success) await fetchProjects();
     return result;
   };
 
@@ -49,28 +53,40 @@ const Projects = () => {
 
   const handleUpdateProject = async (projectData) => {
     const result = await updateProject(editingProject._id, projectData);
-    if (result.success) {
-      // Re-fetch to update the list
-      await fetchProjects();
-    }
+    if (result.success) await fetchProjects();
     return result;
   };
 
   const handleDeleteProject = async (id) => {
-    if (window.confirm('Are you sure you want to delete this project? Tasks associated with it will be moved to the default project.')) {
-      // No need to fetch, as deleteProject updates local state
+    if (window.confirm('Are you sure? Tasks will be moved to the default project.')) {
       await deleteProject(id);
     }
   };
 
   const handleToggleArchive = async (id) => {
-    // No need to fetch, as toggleArchive updates local state
     await toggleArchive(id);
   };
-  
-  const handleProjectClick = (projectId) => {
-      // TODO: Implement navigation to the project's task list (e.g., /tasks?projectId=XXX)
-      console.log(`Navigating to tasks for project ID: ${projectId}`);
+
+  // --- ✅ New Settings Handlers per your request ---
+  const handleOpenSettings = (project) => {
+    setSettingsProject(project);
+  };
+
+  const handleUpdateSettings = async (settings) => {
+    const result = await updateProject(settingsProject._id, settings);
+    if (result.success) {
+      await fetchProjects();
+    }
+    return result;
+  };
+
+  const handleArchiveFromSettings = async () => {
+    await toggleArchive(settingsProject._id);
+    await fetchProjects();
+  };
+
+  const handleDeleteFromSettings = async () => {
+    return await deleteProject(settingsProject._id);
   };
 
   if (loading) {
@@ -85,7 +101,7 @@ const Projects = () => {
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto min-h-screen">
       
-      {/* Header and Controls */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Projects</h1>
@@ -102,27 +118,51 @@ const Projects = () => {
       </div>
 
       {/* Project Grid */}
-      {projects.length === 0 ? (
-        <div className="text-center p-12 bg-white rounded-xl shadow-lg">
-          <h3 className="text-xl font-semibold text-gray-800">No Projects Found</h3>
-          <p className="text-gray-500 mt-2">Click "New Project" to get started organizing your tasks.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {projects.map(project => (
-            <ProjectCard
-              key={project._id}
-              project={project}
-              onEdit={handleEditProject}
-              onDelete={handleDeleteProject}
-              onArchive={handleToggleArchive}
-              onClick={handleProjectClick}
-            />
-          ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {projects.map(project => (
+          <ProjectCard
+            key={project._id}
+            project={project}
+            onEdit={handleEditProject}
+            onDelete={handleDeleteProject}
+            onArchive={handleToggleArchive}
+            onClick={() => setSelectedProjectForAnalytics(project._id)}
+            onSettings={handleOpenSettings} // ✅ Added prop
+          />
+        ))}
+      </div>
+
+      {/* ✅ Settings Modal */}
+      {settingsProject && (
+        <ProjectSettings
+          project={settingsProject}
+          onClose={() => setSettingsProject(null)}
+          onUpdate={handleUpdateSettings}
+          onArchive={handleArchiveFromSettings}
+          onDelete={handleDeleteFromSettings}
+        />
+      )}
+
+      {/* Analytics Modal */}
+      {selectedProjectForAnalytics && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center z-10">
+              <h2 className="text-2xl font-bold text-gray-800">Project Analytics</h2>
+              <button
+                onClick={() => setSelectedProjectForAnalytics(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ProjectAnalytics projectId={selectedProjectForAnalytics} />
+            </div>
+          </div>
         </div>
       )}
       
-      {/* Project Modal (Add/Edit) */}
       <ProjectModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

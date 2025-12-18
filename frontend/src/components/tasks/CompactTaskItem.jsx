@@ -43,11 +43,15 @@ const CompactTaskItem = ({ task, onToggle, onEdit, onDelete, isSelected, onSelec
         <div className="flex items-center space-x-2">
           {/* Selection Checkbox */}
           <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onSelect(task._id)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-          />
+  type="checkbox"
+  checked={isSelected}
+  onChange={(e) => {
+    e.stopPropagation();          // ✅ don’t let the row/actions hijack the click
+    onSelect(task._id);
+  }}
+  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+/>
+
 
           {/* Status Badge Button */}
           <button

@@ -1,13 +1,15 @@
-import { X, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { X, Trash2, CheckCircle, Circle, Folder } from 'lucide-react';
 
 const BulkActionsBar = ({
   selectedCount,
-  totalCount,          // ✅ new prop: total number of tasks
+  totalCount,          // ✅ total number of tasks
   onMarkComplete,
   onMarkIncomplete,
   onDelete,
+  onMoveToProject,     // ✅ new handler
   onClear,
   onSelectAll,         // ✅ toggles select/deselect all
+  projects = []        // ✅ list of projects
 }) => {
   if (selectedCount === 0) return null;
 
@@ -62,6 +64,24 @@ const BulkActionsBar = ({
               Mark Incomplete
             </button>
 
+            {/* Move to Project Dropdown */}
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  onMoveToProject(e.target.value);
+                  e.target.value = '';
+                }
+              }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white border-0 text-sm font-medium"
+            >
+              <option value="" disabled selected>Move to Project...</option>
+              {projects.filter(p => !p.isArchived).map(project => (
+                <option key={project._id} value={project._id}>
+                  {project.icon ? project.icon : <Folder className="inline w-4 h-4 mr-1" />} {project.name}
+                </option>
+              ))}
+            </select>
+
             {/* Delete */}
             <button
               onClick={onDelete}
@@ -81,17 +101,23 @@ const BulkActionsBar = ({
                 else if (action === 'complete') onMarkComplete();
                 else if (action === 'incomplete') onMarkIncomplete();
                 else if (action === 'delete') onDelete();
+                else if (action.startsWith('move-')) {
+                  onMoveToProject(action.replace('move-', ''));
+                }
                 e.target.value = '';
               }}
               className="px-3 py-2 bg-white/20 border-0 rounded-lg text-white appearance-none cursor-pointer focus:ring-0 focus:border-0"
             >
-              <option value="" disabled className="text-gray-800 bg-white">Choose Action...</option>
-              <option value="selectAll" className="text-gray-800 bg-white">
-                {allSelected ? 'Deselect All' : 'Select All'}
-              </option>
-              <option value="complete" className="text-gray-800 bg-white">Mark Complete</option>
-              <option value="incomplete" className="text-gray-800 bg-white">Mark Incomplete</option>
-              <option value="delete" className="text-gray-800 bg-white">Delete</option>
+              <option value="" disabled>Choose Action...</option>
+              <option value="selectAll">{allSelected ? 'Deselect All' : 'Select All'}</option>
+              <option value="complete">Mark Complete</option>
+              <option value="incomplete">Mark Incomplete</option>
+              {projects.filter(p => !p.isArchived).map(project => (
+                <option key={project._id} value={`move-${project._id}`}>
+                  {project.icon ? project.icon : '📁'} {project.name}
+                </option>
+              ))}
+              <option value="delete">Delete</option>
             </select>
           </div>
         </div>
