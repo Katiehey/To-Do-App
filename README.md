@@ -904,3 +904,98 @@ You now have a **complete project management system**:
 - ✅ Bulk operations
 - ✅ Analytics & insights
 - ✅ Settings & management
+
+
+## ✅ Session 17 Complete!
+
+### What was accomplished:
+✓ Recurring task utilities (calculations)
+✓ Auto-create next occurrence on completion
+✓ Cron jobs (daily & hourly checks)
+✓ Recurring task endpoints
+✓ Support for all frequencies (daily/weekly/monthly/yearly)
+✓ Custom intervals (every 2 days, etc.)
+✓ End date support
+✓ Manual next occurrence creation
+
+### Recurring Task Features:
+
+**Frequencies:**
+- ✅ Daily (every day)
+- ✅ Weekly (every week)
+- ✅ Monthly (every month)
+- ✅ Yearly (every year)
+
+**Intervals:**
+- ✅ Every N days/weeks/months/years
+- ✅ Example: Every 2 weeks, Every 3 days
+
+**Smart Logic:**
+- ✅ Only creates next occurrence when completed
+- ✅ Respects end date
+- ✅ Prevents duplicate occurrences
+- ✅ Copies all task properties
+- ✅ Resets subtasks
+
+**Endpoints:**
+- `GET /api/tasks/recurring` - Get all recurring tasks
+- `POST /api/tasks/:id/create-next` - Manually create next
+- `PATCH /api/tasks/:id/toggle` - Auto-creates on complete
+
+**Cron Jobs:**
+- ✅ Daily check at midnight
+- ✅ Hourly check for missed tasks
+- ✅ Automatic background processing
+
+### Example Use Cases:
+
+**Daily Tasks:**
+```json
+{
+  "title": "Daily Standup",
+  "recurring": {
+    "enabled": true,
+    "frequency": "daily",
+    "interval": 1
+  }
+}
+```
+
+**Biweekly:**
+```json
+{
+  "title": "Sprint Review",
+  "recurring": {
+    "enabled": true,
+    "frequency": "weekly",
+    "interval": 2
+  }
+}
+```
+
+**Monthly with End Date:**
+```json
+{
+  "title": "Monthly Report",
+  "recurring": {
+    "enabled": true,
+    "frequency": "monthly",
+    "interval": 1,
+    "endDate": "2025-12-31"
+  }
+}
+```
+
+### How It Works:
+
+1. **Create recurring task** → Task saved with recurring config
+2. **Mark as complete** → Next occurrence auto-created
+3. **New task appears** → Same title, description, tags
+4. **Due date calculated** → Based on frequency + interval
+5. **Repeat forever** → Until end date (if set)
+
+### Cron Job Schedule:
+
+```
+Daily:  0 0 * * *  (Every day at midnight)
+Hourly: 0 * * * *  (Every hour)
