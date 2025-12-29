@@ -9,7 +9,7 @@ const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./middleware/logger');
 const { apiLimiter } = require('./middleware/rateLimiter');
-
+const { initializeCronJobs } = require('./services/cronService'); // ✅ Added Cron Service Import
 
 // Load environment variables
 dotenv.config();
@@ -20,30 +20,34 @@ validateEnv();
 // Connect to MongoDB
 connectDB();
 
+// ✅ Initialize cron jobs for recurring tasks (Skip in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  initializeCronJobs();
+}
+
 const app = express();
 
 // --- START OF FIXED MIDDLEWARE ORDER ---
 
-// Body parser (MUST come before mongoSanitize, helmet, and xss-clean if they access req.body)
+// Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Security Middleware
-app.use(helmet()); // Set security headers
-// // CORS needs to be defined early too
+app.use(helmet()); 
 app.use(cors({  
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 
-app.use(mongoSanitize()); // Prevent MongoDB injection
-app.use(xss()); // Prevent XSS attacks
+app.use(mongoSanitize());
+app.use(xss());
 // --- END OF FIXED MIDDLEWARE ORDER ---
 
 // Rate limiting
-app.use('/api/', apiLimiter); // Apply to all API routes
+app.use('/api/', apiLimiter);
 
-// Add this line right here
+// Debug logger
 app.use((req, res, next) => {
   console.log(`[DEBUG] Request received for URL: ${req.url}`);
   next();
@@ -54,13 +58,16 @@ app.use(logger);
 
 // Basic route // Test route
 app.get('/', (req, res) => {
-  res.json({ message: 'To-D0-App API is running!',
+  res.json({ 
+    message: 'To-D0-App API is running!',
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
       auth: '/api/auth',
       tasks: '/api/tasks',
-      projects: '/api/projects'} });
+      projects: '/api/projects'
+    } 
+  });
 });
 
 // Health check route
@@ -74,17 +81,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Routes (will be added in next sessions)
+// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
-// app.use('/api/tasks', require('./routes/taskRoutes'));
-// app.use('/api/projects', require('./routes/projectRoutes'));
-// Test routes
 app.use('/api/test', require('./routes/testRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 
 // 404 handler
-app.use('/*splat', (req, res) => {
+app.use('/*', (req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
@@ -105,13 +109,13 @@ const server = app.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.error(`❌ Unhandled Rejection: ${err.message}`);
-  // Close server & exit process
   server.close(() => process.exit(1));
 });
 
 module.exports = app;
 
-//find and kill AirPlay on port 5000 with these commands
-//sudo lsof -i :5000 //Run this command to find the process ID (PID) using port 5000
-//kill -9 <PID>409
-//kill -9 409
+/**
+ * find and kill AirPlay on port 5000:
+ * sudo lsof -i :5000
+ * kill -9 <PID>
+ */

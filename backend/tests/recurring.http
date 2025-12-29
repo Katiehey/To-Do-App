@@ -1,0 +1,49 @@
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN
+
+### Create Daily Recurring Task
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Morning Exercise",
+  "description": "30 minutes workout",
+  "priority": "high",
+  "dueDate": "2024-12-18T07:00:00Z",
+  "recurring": {
+    "enabled": true,
+    "frequency": "daily",
+    "interval": 1
+  }
+}
+
+### Create Weekly Recurring Task
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Team Meeting",
+  "description": "Weekly team sync",
+  "priority": "medium",
+  "dueDate": "2024-12-20T10:00:00Z",
+  "recurring": {
+    "enabled": true,
+    "frequency": "weekly",
+    "interval": 1,
+    "endDate": "2025-12-31T23:59:59Z"
+  }
+}
+
+### Get All Recurring Tasks
+GET {{baseUrl}}/tasks/recurring
+Authorization: Bearer {{token}}
+
+### Toggle Task Completion (Creates Next Occurrence)
+PATCH {{baseUrl}}/tasks/TASK_ID/toggle
+Authorization: Bearer {{token}}
+
+### Manually Create Next Occurrence
+POST {{baseUrl}}/tasks/TASK_ID/create-next
+Authorization: Bearer {{token}}

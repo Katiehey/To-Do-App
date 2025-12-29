@@ -1,10 +1,9 @@
 const asyncHandler = require('../middleware/asyncHandler');
 const { Task, Project } = require('../models');
+const { shouldGenerateNextOccurrence, createNextOccurrence } = require('../utils/recurringTasks');
 
 /**
  * @desc    Get all tasks for logged-in user
- * @route   GET /api/tasks
- * @access  Private
  */
 const getTasks = asyncHandler(async (req, res) => {
   const {
@@ -19,23 +18,17 @@ const getTasks = asyncHandler(async (req, res) => {
     sortOrder = 'desc',
   } = req.query;
 
-  // Build query
   const query = { user: req.user._id };
 
-  // Filters
-  if (taskStatus) {
-    query.taskStatus = taskStatus;
-  }
-  if (priority) {
-    query.priority = priority;
-  }
-  if (project) {
-    query.project = project;
-  }
+  if (taskStatus) query.taskStatus = taskStatus;
+  if (priority) query.priority = priority;
+  if (project) query.project = project;
+  
   if (tags) {
     const tagArray = Array.isArray(tags) ? tags : [tags];
     query.tags = { $in: tagArray };
   }
+
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: 'i' } },
@@ -43,14 +36,9 @@ const getTasks = asyncHandler(async (req, res) => {
     ];
   }
 
-  // Pagination
   const skip = (parseInt(page) - 1) * parseInt(limit);
+  const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
-  // Sort
-  const sortOptions = {};
-  sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-
-  // Execute query
   const tasks = await Task.find(query)
     .populate('project', 'name color')
     .sort(sortOptions)
@@ -71,20 +59,13 @@ const getTasks = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get single task by ID
- * @route   GET /api/tasks/:id
- * @access  Private
  */
 const getTaskById = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id).populate('project', 'name color');
 
-  if (!task) {
+  if (!task || task.user.toString() !== req.user._id.toString()) {
     res.status(404);
-    throw new Error('Task not found');
-  }
-
-  if (task.user.toString() !== req.user._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to access this task');
+    throw new Error('Task not found or unauthorized');
   }
 
   res.status(200).json({ success: true, data: { task } });
@@ -92,8 +73,6 @@ const getTaskById = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Create new task
- * @route   POST /api/tasks
- * @access  Private
  */
 const createTask = asyncHandler(async (req, res) => {
   const taskData = {
@@ -102,146 +81,136 @@ const createTask = asyncHandler(async (req, res) => {
     taskStatus: req.body.taskStatus || 'pending',
   };
 
-  // If no project specified, use default project
   if (!taskData.project) {
-    const defaultProject = await Project.findOne({
-      user: req.user._id,
-      isDefault: true,
-    });
-    
-    if (defaultProject) {
-      taskData.project = defaultProject._id;
-    }
-  }
-
-  if (taskData.project) {
-    const project = await Project.findById(taskData.project);
-    if (!project || project.user.toString() !== req.user._id.toString()) {
-      res.status(400);
-      throw new Error('Invalid project');
-    }
+    const defaultProject = await Project.findOne({ user: req.user._id, isDefault: true });
+    if (defaultProject) taskData.project = defaultProject._id;
   }
 
   const task = await Task.create(taskData);
   await task.populate('project', 'name color');
 
   if (task.project) {
-    await Project.findByIdAndUpdate(task.project, { $inc: { taskCount: 1 } });
+    const updateData = { $inc: { taskCount: 1 } };
+    if (task.taskStatus === 'completed') {
+      updateData.$inc.completedTaskCount = 1;
+    }
+    await Project.findByIdAndUpdate(task.project, updateData);
   }
 
-  res.status(201).json({
-    success: true,
-    message: 'Task created successfully',
-    data: { task },
-  });
+  res.status(201).json({ success: true, message: 'Task created', data: { task } });
 });
 
 /**
  * @desc    Update task
- * @route   PUT /api/tasks/:id
- * @access  Private
  */
 const updateTask = asyncHandler(async (req, res) => {
   let task = await Task.findById(req.params.id);
 
-  if (!task) {
+  if (!task || task.user.toString() !== req.user._id.toString()) {
     res.status(404);
-    throw new Error('Task not found');
+    throw new Error('Task not found or unauthorized');
   }
 
-  if (task.user.toString() !== req.user._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to update this task');
-  }
+  const wasCompleted = task.taskStatus === 'completed';
+  const newStatus = req.body.taskStatus || task.taskStatus;
+  const isNowCompleted = newStatus === 'completed';
 
   task = await Task.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
   }).populate('project', 'name color');
 
-  res.status(200).json({
-    success: true,
-    message: 'Task updated successfully',
-    data: { task },
-  });
+  if (task.project && wasCompleted !== isNowCompleted) {
+    const increment = isNowCompleted ? 1 : -1;
+    await Project.findByIdAndUpdate(task.project, {
+      $inc: { completedTaskCount: increment },
+    });
+  }
+
+  if (!wasCompleted && isNowCompleted && shouldGenerateNextOccurrence(task)) {
+    const nextTask = await createNextOccurrence(Task, task);
+    if (nextTask) {
+      await nextTask.populate('project', 'name color');
+      return res.status(200).json({
+        success: true,
+        message: 'Task completed and next occurrence created',
+        data: { task, nextTask },
+      });
+    }
+  }
+
+  res.status(200).json({ success: true, message: 'Task updated', data: { task } });
 });
 
 /**
  * @desc    Delete task
- * @route   DELETE /api/tasks/:id
- * @access  Private
  */
 const deleteTask = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
 
-  if (!task) {
+  if (!task || task.user.toString() !== req.user._id.toString()) {
     res.status(404);
-    throw new Error('Task not found');
-  }
-
-  if (task.user.toString() !== req.user._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to delete this task');
+    throw new Error('Task not found or unauthorized');
   }
 
   if (task.project) {
-    await Project.findByIdAndUpdate(task.project, { $inc: { taskCount: -1 } });
+    const decData = { $inc: { taskCount: -1 } };
+    if (task.taskStatus === 'completed') decData.$inc.completedTaskCount = -1;
+    await Project.findByIdAndUpdate(task.project, decData);
   }
 
   await task.deleteOne();
-
-  res.status(200).json({
-    success: true,
-    message: 'Task deleted successfully',
-    data: {},
-  });
+  res.status(200).json({ success: true, message: 'Task deleted' });
 });
 
 /**
- * @desc    Toggle task completion (completed <-> pending)
- * @route   PATCH /api/tasks/:id/toggle
- * @access  Private
+ * @desc    Toggle task completion
  */
-const toggleTaskStatus = asyncHandler(async (req, res) => {
+const toggleTaskCompletion = asyncHandler(async (req, res) => {
   const task = await Task.findById(req.params.id);
 
-  if (!task) {
+  if (!task || task.user.toString() !== req.user._id.toString()) {
     res.status(404);
     throw new Error('Task not found');
   }
 
-  if (task.user.toString() !== req.user._id.toString()) {
-    res.status(403);
-    throw new Error('Not authorized to update this task');
+  const wasCompleted = task.taskStatus === 'completed';
+  
+  if (wasCompleted) {
+    task.taskStatus = 'pending';
+    if (task.project) {
+      await Project.findByIdAndUpdate(task.project, { $inc: { completedTaskCount: -1 } });
+    }
+  } else {
+    task.taskStatus = 'completed';
+    if (task.project) {
+      await Project.findByIdAndUpdate(task.project, { $inc: { completedTaskCount: 1 } });
+    }
   }
 
-  task.taskStatus = task.taskStatus === 'completed' ? 'pending' : 'completed';
   await task.save();
   await task.populate('project', 'name color');
 
+  let nextTask = null;
+  if (!wasCompleted && task.taskStatus === 'completed' && shouldGenerateNextOccurrence(task)) {
+    nextTask = await createNextOccurrence(Task, task);
+    if (nextTask) await nextTask.populate('project', 'name color');
+  }
+
   res.status(200).json({
     success: true,
-    message: `Task marked as ${task.taskStatus}`,
-    data: { task },
+    message: `Task marked as ${task.taskStatus}${nextTask ? ' and next occurrence created' : ''}`,
+    data: { task, nextTask },
   });
 });
 
 /**
  * @desc    Get task statistics
- * @route   GET /api/tasks/stats
- * @access  Private
  */
 const getTaskStats = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-
   const stats = await Task.aggregate([
-    { $match: { user: userId } },
-    {
-      $group: {
-        _id: '$taskStatus',
-        count: { $sum: 1 },
-      },
-    },
+    { $match: { user: req.user._id } },
+    { $group: { _id: '$taskStatus', count: { $sum: 1 } } },
   ]);
 
   const overall = stats.reduce(
@@ -259,12 +228,63 @@ const getTaskStats = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Get recurring tasks
+ */
+const getRecurringTasks = asyncHandler(async (req, res) => {
+  const tasks = await Task.find({
+    user: req.user._id,
+    'recurring.enabled': true,
+  })
+    .populate('project', 'name color')
+    .sort('-createdAt');
+
+  res.status(200).json({
+    success: true,
+    count: tasks.length,
+    data: { tasks },
+  });
+});
+
+/**
+ * @desc    Manually trigger next occurrence creation
+ */
+const createNextOccurrenceManually = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.id);
+
+  if (!task || task.user.toString() !== req.user._id.toString()) {
+    res.status(404);
+    throw new Error('Task not found or unauthorized');
+  }
+
+  if (!task.recurring || !task.recurring.enabled) {
+    res.status(400);
+    throw new Error('Task is not a recurring task');
+  }
+
+  const nextTask = await createNextOccurrence(Task, task);
+  if (!nextTask) {
+    res.status(400);
+    throw new Error('Cannot create next occurrence (limit reached or already exists)');
+  }
+
+  await nextTask.populate('project', 'name color');
+
+  res.status(201).json({
+    success: true,
+    message: 'Next occurrence created successfully',
+    data: { task: nextTask },
+  });
+});
+
 module.exports = {
   getTasks,
   getTaskById,
   createTask,
   updateTask,
   deleteTask,
-  toggleTaskStatus,
+  toggleTaskCompletion,
   getTaskStats,
+  getRecurringTasks,
+  createNextOccurrenceManually,
 };
