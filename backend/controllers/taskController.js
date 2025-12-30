@@ -39,11 +39,14 @@ const getTasks = asyncHandler(async (req, res) => {
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
+  console.log("Task query:", query);
   const tasks = await Task.find(query)
     .populate('project', 'name color')
     .sort(sortOptions)
     .limit(parseInt(limit))
     .skip(skip);
+
+  console.log("Tasks found:", tasks.length);
 
   const totalTasks = await Task.countDocuments(query);
 
@@ -104,6 +107,7 @@ const createTask = asyncHandler(async (req, res) => {
  * @desc    Update task
  */
 const updateTask = asyncHandler(async (req, res) => {
+  console.log("Update request:", req.params.id, req.body);
   let task = await Task.findById(req.params.id);
 
   if (!task || task.user.toString() !== req.user._id.toString()) {

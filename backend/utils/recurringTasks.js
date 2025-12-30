@@ -34,14 +34,14 @@ const shouldGenerateNextOccurrence = (task) => {
   if (task.taskStatus !== 'completed') return false;
 
   // End date check
-  if (task.recurring.endDate && new Date() > new Date(task.recurring.endDate)) {
+  if (task.recurring.endDate && new Date(task.dueDate) >= new Date(task.recurring.endDate)) {
     return false;
   }
 
   // If next occurrence is already scheduled in the future
-  if (task.recurring.nextOccurrence && new Date() < new Date(task.recurring.nextOccurrence)) {
-    return false;
-  }
+  //if (task.recurring.nextOccurrence && new Date() < new Date(task.recurring.nextOccurrence)) {
+    //return false;
+  //}
 
   return true;
 };
@@ -80,7 +80,7 @@ const createNextOccurrence = async (Task, originalTask) => {
     tags: originalTask.tags,
     project: originalTask.project,
     user: originalTask.user,
-    recurring,
+    recurring: { ...originalTask.recurring, nextOccurrence: nextDate },
     completed: false, // optional, depending on schema
     subtasks: originalTask.subtasks.map((st) => ({
       title: st.title,
