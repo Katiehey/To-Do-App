@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Trash2, Edit2, Calendar, Tag, AlertCircle, Clock, Folder } from 'lucide-react';
+import { Trash2, Edit2, Calendar, Tag, AlertCircle, Clock, Folder, Repeat } from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
 import StatusBadge from './StatusBadge';
+import RecurringBadge from './RecurringBadge'; // ✅ Added Import
 
 // Helper function for project color/style
 const getProjectColorStyle = (color) => {
@@ -21,6 +22,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
       archived: "pending",
     };
     const nextStatus = nextStatusMap[task.taskStatus] || "pending";
+    console.log("Current:", task.taskStatus, "Next:", nextStatus);
     await onUpdateStatus(task._id, nextStatus);
   };
 
@@ -48,7 +50,6 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
     >
       {/* Left side: checkbox + content */}
       <div className="flex-1 min-w-0">
-        {/* Top row: checkbox, status, title */}
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -72,15 +73,19 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
           </h3>
         </div>
 
-        {/* Description */}
         {task.description && (
           <p className="mt-1 text-sm text-gray-600 break-words">
             {task.description}
           </p>
         )}
 
-        {/* Meta Info */}
+        {/* ✅ Meta Info Section Updated */}
         <div className="mt-2 flex flex-wrap items-center text-xs text-gray-500 gap-x-4 gap-y-1">
+          {/* Show Recurring Badge first if enabled */}
+          {task.recurring?.enabled && (
+            <RecurringBadge recurring={task.recurring} size="sm" />
+          )}
+
           {project && (
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-white"
@@ -90,12 +95,14 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
               {project.name}
             </span>
           )}
+          
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${priorityColor}`}
           >
             <AlertCircle className="w-3 h-3 mr-1" />
             {task.priority}
           </span>
+
           {task.dueDate && (
             <span
               className={`flex items-center ${
@@ -109,6 +116,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
               )}
             </span>
           )}
+
           {task.tags?.length > 0 && (
             <span className="flex items-center">
               <Tag className="w-3 h-3 mr-1" />

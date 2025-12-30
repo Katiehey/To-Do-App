@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import { Folder, Plus, ChevronDown, ChevronRight, Archive, Menu, X } from 'lucide-react';
+import { useTask } from '../../context/TaskContext';
+import { useProject } from '../../context/ProjectContext';
 
 
 const ProjectSidebar = ({
-  projects = [],        // default to empty array to avoid crashes
-  tasks = [],           // 👈 new prop: live tasks array
+  //projects = [],        // default to empty array to avoid crashes
+  //tasks = [],           // 👈 new prop: live tasks array
   activeProjectId,
   onProjectSelect,
   onCreateProject,
   className = ''
 }) => {
+  const { tasks } = useTask();
+  const { projects } = useProject();
+
   console.log("projects:", projects);
   console.log("tasks:", tasks);
+  
   const [showArchived, setShowArchived] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 

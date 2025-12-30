@@ -17,3 +17,22 @@ export const RECURRING_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'yearly', label: 'Yearly' },
 ];
+
+export const RECURRING_INTERVALS = {
+  daily: Array.from({ length: 30 }, (_, i) => ({
+    value: i + 1,
+    label: i === 0 ? 'Every day' : `Every ${i + 1} days`
+  })),
+  weekly: Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: i === 0 ? 'Every week' : `Every ${i + 1} weeks`
+  })),
+  monthly: Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: i === 0 ? 'Every month' : `Every ${i + 1} months`
+  })),
+  yearly: Array.from({ length: 5 }, (_, i) => ({
+    value: i + 1,
+    label: i === 0 ? 'Every year' : `Every ${i + 1} years`
+  })),
+};

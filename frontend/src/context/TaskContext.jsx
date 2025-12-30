@@ -42,20 +42,26 @@ export const TaskProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const filterParams = { ...filters, ...customFilters };
-      const response = await taskService.getTasks(filterParams);
 
-      setTasks(response.data.tasks);
+      const filterParams = { ...filters, ...customFilters };
+
+      console.log("fetchTasks called with filters:", filterParams);
+      
+
+      const payload = await taskService.getTasks(filterParams);
+      console.log("payload:", payload);
+      setTasks(payload.data.tasks);
       setPagination({
-        page: response.page,
-        pages: response.pages,
-        total: response.total,
-        count: response.count,
+        page: payload.page,
+        pages: payload.pages,
+        total: payload.total,
+        count: payload.count,
       });
 
       //setSelectedTasks([]);
 
-      return { success: true, data: response.data.tasks };
+      console.log("Tasks fetched:", payload.data.tasks.length);  
+      return { success: true, data: payload.data.tasks };
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to fetch tasks';
       setError(message);
@@ -70,8 +76,9 @@ export const TaskProvider = ({ children }) => {
     try {
       setError(null);
       const response = await taskService.createTask(taskData);
-      setTasks(prev => [response.data.task, ...prev]);
-      return { success: true, data: response.data.task };
+      const newTask = response.data.data.task;
+      setTasks(prev => [newTask, ...prev]);
+      return { success: true, data: newTask };
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to create task';
       setError(message);
@@ -84,10 +91,11 @@ export const TaskProvider = ({ children }) => {
     try {
       setError(null);
       const response = await taskService.updateTask(id, taskData);
+      const updatedTask = response.data.data.task;
       setTasks(prev =>
-        prev.map(task => (task._id === id ? response.data.task : task))
+        prev.map(task => (task._id === id ? updatedTask : task))
       );
-      return { success: true, data: response.data.task };
+      return { success: true, data: updatedTask };
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to update task';
       setError(message);
@@ -111,19 +119,34 @@ export const TaskProvider = ({ children }) => {
 
   // NEW: Update task status (replaces toggleTask)
   const updateTaskStatus = async (id, newStatus) => {
-    try {
-      setError(null);
-      const response = await taskService.updateTask(id, { taskStatus: newStatus });
-      setTasks(prev =>
-        prev.map(task => (task._id === id ? response.data.task : task))
-      );
-      return { success: true, data: response.data.task };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to update task status';
-      setError(message);
-      return { success: false, error: message };
-    }
-  };
+  console.log("updateTaskStatus called with:", id, newStatus);
+  try {
+    setError(null);
+    const response = await taskService.updateTask(id, { taskStatus: newStatus });
+    console.log("RAW updateTaskStatus response:", response);
+
+    const updatedTask = response.data?.task || response.data?.data?.task;
+    const nextTask = response.data?.nextTask || response.data?.data?.nextTask;
+
+    if (!updatedTask) { throw new Error("No task returned from backend"); }
+
+    setTasks(prev => {
+      let newTasks = prev.map(task => (task._id === id ? updatedTask : task));
+      if (nextTask) {
+        newTasks = [nextTask, ...newTasks];
+      }
+      return newTasks;
+    });
+
+    return { success: true, data: { task: updatedTask, nextTask } };
+  } catch (err) {
+    console.error("updateTaskStatus error:", err);
+    const message = err.response?.data?.message || 'Failed to update task status';
+    setError(message);
+    return { success: false, error: message };
+  }
+};
+
 
   // Filters
   const updateFilters = (newFilters) => {

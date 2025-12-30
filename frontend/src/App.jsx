@@ -11,6 +11,7 @@ import Register from './components/auth/Register';
 import Tasks from './pages/Tasks';
 import NotFound from './pages/NotFound';
 import 'react-datepicker/dist/react-datepicker.css';
+import './index.css'
 //import TasksPage from "./pages/TasksPage";
 // Assuming you will create these components soon:
 // import Tasks from './pages/Tasks';
