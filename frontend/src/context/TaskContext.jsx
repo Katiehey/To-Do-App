@@ -76,9 +76,10 @@ export const TaskProvider = ({ children }) => {
     try {
       setError(null);
       const response = await taskService.createTask(taskData);
-      const newTask = response.data.data.task;
+      const newTask = response.data.task;
       setTasks(prev => [newTask, ...prev]);
       return { success: true, data: newTask };
+
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to create task';
       setError(message);
@@ -91,7 +92,7 @@ export const TaskProvider = ({ children }) => {
     try {
       setError(null);
       const response = await taskService.updateTask(id, taskData);
-      const updatedTask = response.data.data.task;
+      const updatedTask = response.data.task;
       setTasks(prev =>
         prev.map(task => (task._id === id ? updatedTask : task))
       );
