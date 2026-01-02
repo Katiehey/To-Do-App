@@ -1003,7 +1003,7 @@ Hourly: 0 * * * *  (Every hour)
 
 ## ✅ Session 18 Complete!
 
-### What we accomplished:
+### What was accomplished:
 ✓ Recurring fields in task form
 ✓ Visual frequency selector
 ✓ Interval picker (every N days/weeks)
@@ -1101,7 +1101,7 @@ Hourly: 0 * * * *  (Every hour)
 
 ## ✅ Session 20 Complete!
 
-### What we accomplished:
+### What was accomplished:
 ✓ Monthly calendar view
 ✓ Week, day, and agenda views
 ✓ Color-coded tasks by priority
@@ -1223,3 +1223,148 @@ Hourly: 0 * * * *  (Every hour)
 ---
 
 ## 🎊 Major Milestone Achieved!
+
+
+## ✅ Session 19 Complete!
+
+### What was accomplished:
+✓ Browser notification permission
+✓ Notification service functions
+✓ Notification context & state
+✓ Settings page with preferences
+✓ Due soon notifications
+✓ Overdue task notifications
+✓ Custom reminder notifications
+✓ Periodic checking (every 5 minutes)
+✓ Master notification toggle
+✓ Individual preference controls
+
+### Notification Types:
+
+**1. Due Soon (⏰):**
+- Tasks due within next hour
+- Shows time remaining
+- Orange color
+
+**2. Overdue (⚠️):**
+- Tasks past due date
+- Requires attention
+- Red color
+
+**3. Custom Reminders (📋):**
+- Based on reminderDate field
+- Shows 5 minutes before
+- Purple color
+
+### Settings Features:
+
+**Master Controls:**
+- ✅ Enable/disable all notifications
+- ✅ Browser permission request
+- ✅ Visual status indicator
+
+**Individual Toggles:**
+- ✅ Due soon notifications
+- ✅ Overdue notifications
+- ✅ Custom reminders
+- ✅ All preferences saved to localStorage
+
+**Visual Design:**
+- Green banner when enabled
+- Yellow banner when disabled
+- Toggle switches
+- Icon indicators
+
+### User Experience:
+
+**First Time:**
+```
+1. Go to Settings
+2. See "Browser notifications disabled"
+3. Click "Enable Notifications"
+4. Browser asks permission
+5. Click "Allow"
+6. Green banner: "Enabled"
+7. Toggle preferences
+```
+
+**Notification Flow:**
+```
+1. Task due in 50 minutes
+2. Timer checks every 5 min
+3. At 50 min mark → notification
+4. "⏰ Daily Standup"
+5. "Due in 50 minutes"
+6. Click → Opens /tasks
+```
+
+**Settings Page:**
+```
+┌─────────────────────────────────┐
+│ 🔔 Notifications                │
+│ Manage your preferences         │
+├─────────────────────────────────┤
+│ ✅ Browser notifications        │
+│    enabled                      │
+│    You will receive reminders   │
+├─────────────────────────────────┤
+│ 🔔 All Notifications      [ON]  │
+│ Master toggle                   │
+│                                 │
+│ ⏰ Due Soon              [ON]  │
+│ Tasks due in next hour          │
+│                                 │
+│ ⚠️ Overdue Tasks         [ON]  │
+│ Past due date                   │
+│                                 │
+│ 📋 Custom Reminders      [ON]  │
+│ Your reminder dates             │
+│                                 │
+│ [Send Test Notification]        │
+└─────────────────────────────────┘
+```
+
+### Notification Examples:
+
+**Due Soon:**
+```
+⏰ Daily Standup
+Due in 45 minutes
+
+[View Task] [Dismiss]
+```
+
+**Overdue:**
+```
+⚠️ Review PR #123 is overdue!
+This task needs your attention
+
+[View] [Dismiss]
+```
+
+**Custom Reminder:**
+```
+📋 Team Meeting
+You have a task due soon!
+
+[Mark Complete] [View Task]
+```
+
+### Technical Details:
+
+**Checking Logic:**
+- Runs every 5 minutes
+- Also checks when tasks load
+- Prevents duplicate notifications
+- Respects user preferences
+
+**Browser API:**
+- Uses Notification API
+- Requests permission once
+- Shows native notifications
+- Click to focus window
+
+**Storage:**
+- Preferences in localStorage
+- Persists across sessions
+- Syncs with context
