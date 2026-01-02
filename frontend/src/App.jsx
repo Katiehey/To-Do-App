@@ -10,12 +10,14 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Projects from './components/projects/Projects';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import OfflineIndicator from './components/common/OfflineIndicator'; // ✅ Added
+import InstallPrompt from './components/common/InstallPrompt'; // ✅ Added
 
 // Pages
 import Home from './pages/Home';
 import Tasks from './pages/Tasks';
 import CalendarPage from './pages/Calendar';
-import Settings from './pages/Settings'; // ✅ Added Settings Import
+import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
 // Styles
@@ -29,6 +31,13 @@ function App() {
         <TaskProvider>
           <ProjectProvider>
             <NotificationProvider>
+              {/* ✅ Global PWA UI placed here:
+                  Inside Context (so they can access user/task data if needed)
+                  Outside Routes (so they stay visible during navigation)
+              */}
+              <OfflineIndicator />
+              <InstallPrompt />
+
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
@@ -65,7 +74,6 @@ function App() {
                     }
                   />
 
-                  {/* ✅ Added Settings Route */}
                   <Route
                     path="/settings"
                     element={
