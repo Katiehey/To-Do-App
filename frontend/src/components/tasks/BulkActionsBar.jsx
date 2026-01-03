@@ -1,99 +1,92 @@
-import { X, Trash2, CheckCircle, Circle, Folder } from 'lucide-react';
+import { X, Trash2, CheckCircle, Circle } from 'lucide-react';
 
 const BulkActionsBar = ({
   selectedCount,
-  totalCount,          // ✅ total number of tasks
+  totalCount,
   onMarkComplete,
   onMarkIncomplete,
   onDelete,
-  onMoveToProject,     // ✅ new handler
+  onMoveToProject,
   onClear,
-  onSelectAll,         // ✅ toggles select/deselect all
-  projects = []        // ✅ list of projects
+  onSelectAll,
+  projects = []
 }) => {
   if (selectedCount === 0) return null;
 
   const allSelected = selectedCount === totalCount;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 shadow-2xl transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div className="fixed bottom-0 left-0 right-0 z-[100] bg-slate-900 dark:bg-slate-950 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] transition-all duration-300 animate-in slide-in-from-bottom">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           
-          {/* 1. Selection Info and Clear Button */}
           <div className="flex items-center space-x-4">
-            <span className="text-white text-base font-semibold">
-              {selectedCount} task{selectedCount !== 1 ? 's' : ''} selected
-            </span>
-            
+            <div className="flex items-center bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+              {selectedCount} selected
+            </div>
             <button
               onClick={onClear}
-              className="text-gray-400 hover:text-white p-1 rounded-full transition"
+              className="text-gray-400 hover:text-white p-1 rounded-full transition-colors"
               aria-label="Clear selection"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* 2. Desktop Actions */}
-          <div className="hidden sm:flex items-center space-x-3">
-            
-            {/* Select/Deselect All */}
+          <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={onSelectAll}
-              className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+              className="px-4 py-2 bg-slate-800 text-gray-200 rounded-lg hover:bg-slate-700 transition text-xs font-bold border border-slate-700"
             >
               {allSelected ? 'Deselect All' : 'Select All'}
             </button>
 
-            {/* Mark Complete */}
             <button
               onClick={onMarkComplete}
-              className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-medium"
+              className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition text-xs font-bold shadow-lg shadow-emerald-900/20"
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              Mark Complete
+              Complete
             </button>
 
-            {/* Mark Incomplete */}
             <button
               onClick={onMarkIncomplete}
-              className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition text-sm font-medium"
+              className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition text-xs font-bold shadow-lg shadow-amber-900/20"
             >
               <Circle className="w-4 h-4 mr-2" />
-              Mark Incomplete
+              Reset
             </button>
 
-            {/* Move to Project Dropdown */}
-            <select
-              onChange={(e) => {
-                if (e.target.value) {
-                  onMoveToProject(e.target.value);
-                  e.target.value = '';
-                }
-              }}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white border-0 text-sm font-medium"
-            >
-              <option value="" disabled selected>Move to Project...</option>
-              {projects.filter(p => !p.isArchived).map(project => (
-                <option key={project._id} value={project._id}>
-                  {project.icon ? project.icon : <Folder className="inline w-4 h-4 mr-1" />} {project.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onMoveToProject(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="pl-4 pr-10 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-white border border-slate-700 text-xs font-bold appearance-none cursor-pointer"
+              >
+                <option value="" disabled selected>Move to Project...</option>
+                {projects.filter(p => !p.isArchived).map(project => (
+                  <option key={project._id} value={project._id} className="bg-slate-900">
+                    {project.icon || '📁'} {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Delete */}
             <button
               onClick={onDelete}
-              className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
+              className="flex items-center px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition text-xs font-bold shadow-lg shadow-rose-900/20"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
             </button>
           </div>
 
-          {/* 3. Mobile Dropdown Menu */}
-          <div className="sm:hidden">
+          {/* Mobile Actions Dropdown */}
+          <div className="md:hidden">
             <select
               onChange={(e) => {
                 const action = e.target.value;
@@ -106,17 +99,12 @@ const BulkActionsBar = ({
                 }
                 e.target.value = '';
               }}
-              className="px-3 py-2 bg-white/20 border-0 rounded-lg text-white appearance-none cursor-pointer focus:ring-0 focus:border-0"
+              className="px-4 py-2 bg-blue-600 border-0 rounded-lg text-white text-xs font-bold appearance-none cursor-pointer"
             >
-              <option value="" disabled>Choose Action...</option>
+              <option value="" disabled selected>Actions...</option>
               <option value="selectAll">{allSelected ? 'Deselect All' : 'Select All'}</option>
-              <option value="complete">Mark Complete</option>
-              <option value="incomplete">Mark Incomplete</option>
-              {projects.filter(p => !p.isArchived).map(project => (
-                <option key={project._id} value={`move-${project._id}`}>
-                  {project.icon ? project.icon : '📁'} {project.name}
-                </option>
-              ))}
+              <option value="complete">Complete</option>
+              <option value="incomplete">Incomplete</option>
               <option value="delete">Delete</option>
             </select>
           </div>

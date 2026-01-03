@@ -5,6 +5,7 @@ import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
 import ProjectAnalytics from './ProjectAnalytics';
 import ProjectSettings from './ProjectSettings'; // ✅ Added specific import
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
 const Projects = () => {
   const {
@@ -156,7 +157,7 @@ const Projects = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="p-6">
+            <div className={darkClass(cardClasses, "rounded-xl shadow-2xl p-6 border border-gray-100 dark:border-slate-700 transition-colors")}>
               <ProjectAnalytics projectId={selectedProjectForAnalytics} />
             </div>
           </div>

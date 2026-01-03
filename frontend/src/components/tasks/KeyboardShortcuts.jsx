@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Keyboard, X } from 'lucide-react';
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
-const KeyboardShortcuts = ({
-  onNewTask,
-  onFocusSearch,
-  onSelectAll,
-  onClearSelection,
-}) => {
+const KeyboardShortcuts = ({ onNewTask, onFocusSearch, onSelectAll, onClearSelection }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const shortcuts = [
@@ -19,40 +15,18 @@ const KeyboardShortcuts = ({
 
   useEffect(() => {
     const handleKeydown = (event) => {
-      // N → new task
-      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey) {
-        onNewTask?.();
-      }
-
-      // / → focus search (only when not typing in an input/textarea)
-      if (
-        event.key === '/' &&
-        !event.shiftKey &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        event.target.tagName !== 'INPUT' &&
-        event.target.tagName !== 'TEXTAREA'
-      ) {
+      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey) onNewTask?.();
+      if (event.key === '/' && !event.shiftKey && !event.metaKey && !event.ctrlKey && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
         event.preventDefault();
         onFocusSearch?.();
       }
-
-      // Ctrl/Cmd + A → select all
       if (event.key.toLowerCase() === 'a' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         onSelectAll?.();
       }
-
-      // Esc → clear selection or close modal
       if (event.key === 'Escape') {
-        if (isOpen) {
-          setIsOpen(false);
-        } else {
-          onClearSelection?.();
-        }
+        if (isOpen) setIsOpen(false); else onClearSelection?.();
       }
-
-      // ✅ Shift + / → show shortcuts (produces '?')
       if ((event.key === '/' || event.code === 'Slash') && event.shiftKey && !isOpen) {
         setIsOpen(true);
         event.preventDefault();
@@ -60,18 +34,15 @@ const KeyboardShortcuts = ({
     };
 
     document.addEventListener('keydown', handleKeydown);
-    return () => {
-      document.removeEventListener('keydown', handleKeydown);
-    };
+    return () => document.removeEventListener('keydown', handleKeydown);
   }, [isOpen, onNewTask, onFocusSearch, onSelectAll, onClearSelection]);
 
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 p-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700 transition z-30"
+        className="fixed bottom-4 right-4 p-3 bg-gray-800 dark:bg-blue-600 text-white rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-blue-700 transition-all z-30"
         title="Keyboard shortcuts"
-        aria-label="Show keyboard shortcuts"
       >
         <Keyboard className="w-6 h-6" />
       </button>
@@ -79,35 +50,27 @@ const KeyboardShortcuts = ({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-black bg-opacity-10 backdrop-blur-sm flex items-center justify-center p-4">
-      <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="shortcuts-title"
-      >
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h2
-            id="shortcuts-title"
-            className="text-xl font-semibold text-gray-800 flex items-center space-x-2"
-          >
-            <Keyboard className="w-5 h-5 text-blue-600" />
-            <span>Keyboard Shortcuts</span>
+    <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className={darkClass(cardClasses, "w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden")}>
+        
+        <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-slate-700">
+          <h2 className={darkClass("text-xl font-semibold flex items-center space-x-2", textClasses)}>
+            <Keyboard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span>Shortcuts</span>
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-full transition"
-            aria-label="Close shortcuts"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-5 space-y-4">
           {shortcuts.map((shortcut, index) => (
             <div key={index} className="flex justify-between items-center">
-              <span className="text-gray-600 text-sm">{shortcut.description}</span>
-              <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-mono font-semibold shadow-sm">
+              <span className={subtextClasses}>{shortcut.description}</span>
+              <span className="bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-md text-[10px] font-mono font-bold border border-gray-200 dark:border-slate-600 shadow-sm">
                 {shortcut.key}
               </span>
             </div>

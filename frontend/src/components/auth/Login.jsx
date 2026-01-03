@@ -1,93 +1,55 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// 🎯 FIX 1: Import the new icons you are using 🎯
 import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react'; 
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // 🎯 FIX 2: Define the state variable for the toggle button 🎯
   const [showPassword, setShowPassword] = useState(false);
   
   const { login } = useAuth(); 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData(prevFormData => ({ // Using functional update is safer
-      ...prevFormData,
-      [e.target.name]: e.target.value,
-    }));
-    // Only clear the error state if an error is currently displayed
-    //if (error) {
-    //setError(''); 
-    //}
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-
   const handleSubmit = async (e) => {
-    //e.preventDefault();
     setError('');
     setLoading(true);
-    
     try {
-      // The login function no longer updates the global error state internally
       const result = await login(formData.email, formData.password); 
-
-      if (result.success) {
-        // Only clear the error on successful navigation
-        //setError(''); 
-        navigate('/tasks');
-        //return; 
-      } else {
-        // Set the local error using the message returned from the function
-        setError(result.error); 
-      }
+      if (result.success) navigate('/tasks');
+      else setError(result.error); 
     } catch (err) {
-      // This catch is mostly for network errors if axios fails completely
       setError("An unexpected network error occurred."); 
     } finally {
-      // This ensures loading is always set to false in the Login component
       setLoading(false); 
     }
   };
 
   return (
-    // Outer container for centering the form
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      
-      {/* 🎯 FIX 3: Add text-gray-900 here to ensure text is visible on white background 🎯 */}
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl text-gray-900">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4 transition-colors duration-300">
+      <div className={darkClass(cardClasses, "w-full max-w-md p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700")}>
         
-        {/* MODIFIED form with Home Link */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Sign in to your account to continue
-          </p>
+          <h1 className={darkClass("text-3xl font-bold", textClasses)}>Welcome back</h1>
+          <p className={subtextClasses + " mt-1"}>Sign in to your account to continue</p>
         </div>
 
-        {/* Error Alert */}
         {error && (
-          <div className="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+          <div className="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800/50" role="alert">
             <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
         )}
         
-        {/* Login Form */}
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6" key={error ? "error-form" : "login-form"}>
-          
-          {/* Email Field */}
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>
               Email address
             </label>
             <div className="relative">
@@ -99,18 +61,16 @@ const Login = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                // 💡 FIX: Add autocomplete for email
                 autoComplete="email"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
                 placeholder="you@example.com"
                 disabled={loading}
               />
             </div>
           </div>
 
-          {/* Password Field (Updated with dynamic type and styling) */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>
               Password
             </label>
             <div className="relative">
@@ -118,66 +78,42 @@ const Login = () => {
               <input
                 id="password"
                 name="password"
-                // Dynamically set type based on state
                 type={showPassword ? "text" : "password"} 
                 required
                 value={formData.password}
                 onChange={handleChange}
-                // 💡 FIX: Add autocomplete for current password
-                //autoComplete="password"
-                // Updated pr-10 for spacing, added text-gray-900 for visibility
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
                 placeholder="••••••••"
                 disabled={loading}
               />
-              {/* Styled Toggle Button */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 
-                           p-1 rounded-full text-gray-400 hover:text-gray-600 
-                           hover:bg-gray-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                           transition duration-150"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
-                {/* Smaller icon size (w-4 h-4) */}
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
           
-          {/* Submit Button */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-150"
+            className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? (
-              <>
-                <Loader className="animate-spin -ml-1 mr-3 h-5 w-5" />
-                Signing in...
-              </>
-            ) : (
-              'Sign in'
-            )}
+            {loading ? <><Loader className="animate-spin -ml-1 mr-3 h-5 w-5" /> Signing in...</> : 'Sign in'}
           </button>
         </form>
 
-        {/* Register Link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-700 text-center space-y-4">
+          <p className={subtextClasses}>
             Don't have an account? 
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 ml-1">
-              Sign up
-            </Link>
+            <Link to="/register" className="font-bold text-blue-600 dark:text-blue-400 hover:underline ml-1">Sign up</Link>
           </p>
-        </div>
-        {/* Add this before the very last closing </div> in Login/Register.jsx */}
-        <div className="mt-6 text-center">
-            <Link to="/" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition duration-150">
-                ← Back to Homepage
-            </Link>
+          <Link to="/" className="block text-sm font-medium text-gray-400 hover:text-blue-500 transition-colors">
+            ← Back to Homepage
+          </Link>
         </div>
       </div>
     </div>

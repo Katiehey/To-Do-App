@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, AlertTriangle, Loader } from 'lucide-react';
+import { cardClasses, textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
 
 const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
   ];
   
   const iconOptions = [
-    { name: 'None', value: '' }, // Add an option to clear the icon
+    { name: 'None', value: '' },
     { name: 'Home', value: '🏠' },
     { name: 'Work', value: '💼' },
     { name: 'Book', value: '📚' },
@@ -41,18 +42,8 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
     { name: 'Money', value: '💵' },
   ];
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      color: '#3B82F6',
-      icon: '',
-    });
-    setError('');
-  };
-
   useEffect(() => {
-    if (isOpen) { // Only update/reset when modal opens
+    if (isOpen) {
       if (initialProject) {
         setFormData({
           name: initialProject.name || '',
@@ -61,9 +52,9 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
           icon: initialProject.icon || '',
         });
       } else {
-        resetForm();
+        setFormData({ name: '', description: '', color: '#3B82F6', icon: '' });
       }
-      setError(''); // Clear error on open
+      setError('');
     }
   }, [initialProject, isOpen]);
 
@@ -80,140 +71,90 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
       return;
     }
     setLoading(true);
-    setError('');
-
-    // Ensure we send a valid color string (default to blue if somehow missing)
-    const dataToSend = { ...formData, color: formData.color || '#3B82F6' };
-    
-    const result = await onSubmit(dataToSend);
+    const result = await onSubmit({ ...formData, color: formData.color || '#3B82F6' });
     setLoading(false);
-    
-    if (result.success) {
-      // Note: Do not reset form here, let the useEffect handle reset upon successful closing,
-      // or simply rely on the parent component managing the state correctly.
-      onClose(); 
-    } else {
-      setError(result.error || 'Failed to save project');
-    }
+    if (result.success) onClose(); 
+    else setError(result.error || 'Failed to save project');
   };
 
   if (!isOpen) return null;
 
   return (
-    // Modal Overlay
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center overflow-y-auto" onClick={onClose}>
-      
-      {/* Modal Content */}
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
       <div 
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-auto  my-10 max-h-[90vh] overflow-y-auto" 
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
+        className={darkClass(cardClasses, "w-full max-w-lg mx-auto rounded-xl shadow-2xl my-10 max-h-[90vh] overflow-y-auto")} 
+        onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-100">
-          <h2 id="modal-title" className="text-xl font-semibold text-gray-800">
+        <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-dark-border">
+          <h2 className={darkClass("text-xl font-semibold", textClasses)}>
             {initialProject ? 'Edit Project' : 'Create New Project'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-full transition"
-            aria-label="Close modal"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full transition">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          
-          {/* Error Alert */}
           {error && (
-            <div className="flex items-center p-3 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+            <div className="flex items-center p-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
               <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
           
-          {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Project Name *
-            </label>
+            <label className={darkClass("block text-sm font-medium mb-1", textClasses)}>Project Name *</label>
             <input
               type="text"
-              id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+              className={darkClass(inputClasses, "w-full px-3 py-2 rounded-lg")}
               placeholder="e.g., Personal Goals"
-              maxLength={100}
               required
             />
           </div>
 
-          {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
+            <label className={darkClass("block text-sm font-medium mb-1", textClasses)}>Description</label>
             <textarea
-              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+              className={darkClass(inputClasses, "w-full px-3 py-2 rounded-lg")}
               placeholder="Brief overview of the project"
-              maxLength={500}
             />
           </div>
 
-          {/* Color */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color
-            </label>
+            <label className={darkClass("block text-sm font-medium mb-2", textClasses)}>Color</label>
             <div className="grid grid-cols-8 gap-3">
               {colorOptions.map(color => (
                 <button
                   key={color.value}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
-                  className={`h-10 rounded-lg transition-all border-2 border-transparent ${
-                    formData.color === color.value
-                      ? 'ring-2 ring-offset-2 ring-blue-500 scale-105'
-                      : 'hover:scale-105 hover:opacity-80'
+                  className={`h-8 rounded-lg transition-all border-2 ${
+                    formData.color === color.value ? 'border-blue-500 scale-110' : 'border-transparent hover:scale-105'
                   }`}
                   style={{ backgroundColor: color.value }}
-                  title={color.name}
-                  aria-pressed={formData.color === color.value}
                 />
               ))}
             </div>
           </div>
 
-          {/* Icon */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Icon
-            </label>
+            <label className={darkClass("block text-sm font-medium mb-2", textClasses)}>Icon</label>
             <div className="flex flex-wrap gap-2">
               {iconOptions.map(icon => (
                 <button
                   key={icon.value}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, icon: icon.value }))}
-                  className={`w-12 h-12 rounded-lg border-2 text-2xl flex items-center justify-center transition-all ${
-                    formData.icon === icon.value
-                      ? 'border-blue-500 bg-blue-50 scale-105'
-                      : 'border-gray-300 hover:border-gray-400'
+                  className={`w-10 h-10 rounded-lg border-2 text-xl flex items-center justify-center transition-all ${
+                    formData.icon === icon.value ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-dark-border hover:border-gray-400'
                   }`}
-                  title={icon.name}
-                  aria-pressed={formData.icon === icon.value}
                 >
                   {icon.value}
                 </button>
@@ -221,57 +162,22 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="pt-4 border-t border-gray-100">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Preview
-            </label>
-            <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-              {/* Project Icon/Initial */}
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 mr-4"
-                style={{ backgroundColor: formData.color, color: '#ffffff' }}
-              >
-                {formData.icon ? formData.icon : null}
+          <div className="pt-4 border-t border-gray-100 dark:border-dark-border">
+            <div className="flex items-center p-4 bg-gray-50 dark:bg-dark-bg/50 rounded-lg border border-gray-200 dark:border-dark-border">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 mr-4 shadow-sm" style={{ backgroundColor: formData.color, color: '#ffffff' }}>
+                {formData.icon || null}
               </div>
-              
-              {/* Text Info */}
               <div>
-                <h4 className="text-base font-semibold text-gray-800">
-                  {formData.name || 'Project Name'}
-                </h4>
-                <p className="text-sm text-gray-500 truncate">
-                  {formData.description || 'No description'}
-                </p>
+                <h4 className={darkClass("text-base font-semibold", textClasses)}>{formData.name || 'Project Name'}</h4>
+                <p className={subtextClasses}>{formData.description || 'No description'}</p>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader className="w-5 h-5 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : initialProject ? (
-                'Update Project'
-              ) : (
-                'Create Project'
-              )}
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-dark-border">
+            <button type="button" onClick={onClose} className={darkClass("px-4 py-2 transition", subtextClasses)} disabled={loading}>Cancel</button>
+            <button type="submit" className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50" disabled={loading}>
+              {loading ? <Loader className="w-5 h-5 mr-2 animate-spin" /> : (initialProject ? 'Update' : 'Create')}
             </button>
           </div>
         </form>

@@ -1,38 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// Assuming useAuth and register are correctly defined
 import { useAuth } from '../../context/AuthContext'; 
-import { User, Mail, Lock, AlertCircle, Loader, CheckCircle, Eye, EyeOff } from 'lucide-react'; // Import Eye and EyeOff } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, Loader, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
-// Utility component to display a single password requirement
 const PasswordRequirement = ({ met, text }) => (
-  <div className={`flex items-center text-sm ${met ? 'text-green-600' : 'text-gray-500'}`}>
-    {met ? (
-      <CheckCircle className="w-4 h-4 mr-2" />
-    ) : (
-      <AlertCircle className="w-4 h-4 mr-2" />
-    )}
+  <div className={`flex items-center text-xs font-medium ${met ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+    {met ? <CheckCircle className="w-3.5 h-3.5 mr-2" /> : <AlertCircle className="w-3.5 h-3.5 mr-2" />}
     {text}
   </div>
 );
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState({
-    hasLength: false,
-    hasUpper: false,
-    hasLower: false,
-    hasNumber: false,
-  });
-  
-  // Add state to toggle password visibility
+  const [passwordStrength, setPasswordStrength] = useState({ hasLength: false, hasUpper: false, hasLower: false, hasNumber: false });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -41,14 +24,9 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Ensure you are creating a NEW object here
-    setFormData(prevFormData => ({
-      ...prevFormData, // Spread the previous state
-      [name]: value,   // Update the specific field
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
 
-    // Check password strength logic
     if (name === 'password') {
       setPasswordStrength({
         hasLength: value.length >= 6,
@@ -61,220 +39,116 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    
-    if (!Object.values(passwordStrength).every(Boolean)) {
-      setError('Password does not meet all requirements');
-      return;
-    }
+    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+    if (!Object.values(passwordStrength).every(Boolean)) return setError('Password requirements not met');
     
     setLoading(true);
     const result = await register(formData.name, formData.email, formData.password);
-    
-    if (result.success) {
-      navigate('/tasks');
-    } else {
-      // Assuming 'result.error' contains the backend error message
-      setError(result.error); 
-    }
+    if (result.success) navigate('/tasks');
+    else setError(result.error); 
     setLoading(false);
   };
 
   return (
-    // Outer container for centering the form
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl text-gray-900"> {/* Add text-gray-900 here */}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4 transition-colors duration-300">
+      <div className={darkClass(cardClasses, "w-full max-w-md p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700")}>
         
-        
-        {/* Header (will inherit dark text color) */}
-        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Create your account
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Start organizing your tasks today
-          </p>
+          <h1 className={darkClass("text-3xl font-bold", textClasses)}>Create account</h1>
+          <p className={subtextClasses + " mt-1"}>Start organizing your tasks today</p>
         </div>
 
-        {/* Error Alert */}
         {error && (
-          <div className="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+          <div className="flex items-center p-4 mb-4 text-sm text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800/50" role="alert">
             <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
         )}
         
-        {/* Form Inputs (will inherit dark text color, fixing the issue) */}
-        {/* Register Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          {/* Name Field */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full name
-            </label>
+            <label className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>Full name</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                // 💡 FIX: Add autocomplete for full name
-                autoComplete="name"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="John Doe"
-                disabled={loading}
+                name="name" type="text" required value={formData.name} onChange={handleChange} autoComplete="name"
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="John Doe" disabled={loading}
               />
             </div>
           </div>
 
-          {/* Email Field */}
+          {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email address
-            </label>
+            <label className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>Email address</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                // 💡 FIX: Add autocomplete for email
-                autoComplete="email"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-                disabled={loading}
+                name="email" type="email" required value={formData.email} onChange={handleChange} autoComplete="email"
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="you@example.com" disabled={loading}
               />
             </div>
           </div>
 
-          {/* Password Field */}
+          {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
+            <label className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                id="password"
-                name="password"
-                // Dynamically set type based on state
-                type={showPassword ? "text" : "password"} 
-                required
-                value={formData.password}
-                onChange={handleChange}
-                // 💡 FIX: Add autocomplete for new password
-                autoComplete="password"
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-                disabled={loading}
+                name="password" type={showPassword ? "text" : "password"} required value={formData.password} onChange={handleChange} autoComplete="new-password"
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="••••••••" disabled={loading}
               />
-              {/* MODIFIED Toggle Button 1 (Smaller, subtle, translucent) */}
-              {/* Toggle Button */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 
-                           p-1 rounded-full text-gray-400 hover:text-gray-600 
-                           hover:bg-gray-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                           transition duration-150"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {/* Make the icon itself smaller (w-4 h-4) */}
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Password Strength Indicator */}
           {formData.password && (
-            <div className="space-y-1">
-              <PasswordRequirement met={passwordStrength.hasLength} text="Minimum 6 characters" />
-              <PasswordRequirement met={passwordStrength.hasUpper} text="At least one uppercase letter" />
-              <PasswordRequirement met={passwordStrength.hasLower} text="At least one lowercase letter" />
-              <PasswordRequirement met={passwordStrength.hasNumber} text="At least one number" />
+            <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-slate-900/50 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+              <PasswordRequirement met={passwordStrength.hasLength} text="6+ Characters" />
+              <PasswordRequirement met={passwordStrength.hasUpper} text="Uppercase" />
+              <PasswordRequirement met={passwordStrength.hasLower} text="Lowercase" />
+              <PasswordRequirement met={passwordStrength.hasNumber} text="Number" />
             </div>
           )}
 
-          {/* Confirm Password Field */}
+          {/* Confirm Password */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm password
-            </label>
+            <label className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>Confirm password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                id="confirmPassword"
-                name="confirmPassword"
-                // Dynamically set type based on state
-                type={showConfirmPassword ? "text" : "password"}
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-                disabled={loading}
+                name="confirmPassword" type={showConfirmPassword ? "text" : "password"} required value={formData.confirmPassword} onChange={handleChange}
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="••••••••" disabled={loading}
               />
-              {/* MODIFIED Toggle Button 2 (Smaller, subtle, translucent) */}
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 
-                           p-1 rounded-full text-gray-400 hover:text-gray-600 
-                           hover:bg-gray-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                           transition duration-150"
-                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-              >
-                {/* Make the icon itself smaller (w-4 h-4) */}
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-150"
+            type="submit" disabled={loading}
+            className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? (
-              <>
-                <Loader className="animate-spin -ml-1 mr-3 h-5 w-5" />
-                Creating account...
-              </>
-            ) : (
-              'Create account'
-            )}
+            {loading ? <><Loader className="animate-spin -ml-1 mr-3 h-5 w-5" /> Creating...</> : 'Create account'}
           </button>
         </form>
 
-        {/* Login Link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-700 text-center space-y-4">
+          <p className={subtextClasses}>
             Already have an account? 
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 ml-1">
-              Sign in
-            </Link>
+            <Link to="/login" className="font-bold text-blue-600 dark:text-blue-400 hover:underline ml-1">Sign in</Link>
           </p>
-        </div>
-        {/* Add this before the very last closing </div> in Login/Register.jsx */}
-        <div className="mt-6 text-center">
-            <Link to="/" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition duration-150">
+          <Link to="/" className="block text-sm font-medium text-gray-400 hover:text-blue-500 transition-colors">
             ← Back to Homepage
-            </Link>
+          </Link>
         </div>
       </div>
     </div>
