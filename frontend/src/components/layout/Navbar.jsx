@@ -37,7 +37,11 @@ const Navbar = () => {
           
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center text-2xl font-bold text-blue-600 dark:text-blue-400">
-              <CheckSquare className="h-8 w-8 mr-2" />
+              <img 
+  src="/icons/Appimages/windows11/Square44x44Logo.targetsize-44.png" 
+  alt="App Logo" 
+  className="h-8 w-8 mr-2 object-contain"
+/>
               TaskMaster Pro
             </Link>
           </div>
