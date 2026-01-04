@@ -1,11 +1,25 @@
 import { useState } from 'react';
-import { Trash2, Edit2, Calendar, Tag, AlertCircle, Clock, Folder } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Trash2, 
+  Edit2, 
+  Calendar, 
+  Tag, 
+  AlertCircle, 
+  Clock, 
+  Folder, 
+  ChevronDown, 
+  ChevronUp, 
+  Repeat,
+  Check
+} from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
 import StatusBadge from './StatusBadge';
-import RecurringBadge from './RecurringBadge';
-import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode'; // ✅ Added
+import { InlineSuccessCheck } from '../common/SuccessAnimation';
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
+import { fadeInUp, buttonPress, shakeVariants } from '../../utils/animations';
 
-// Helper function for project color/style
+// Helper for project color style
 const getProjectColorStyle = (color) => {
   return color && color.match(/^#[0-9A-F]{6}$/i)
     ? { backgroundColor: color, color: '#ffffff' }
@@ -13,8 +27,11 @@ const getProjectColorStyle = (color) => {
 };
 
 const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelectTask }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
+  // Original status rotation logic
   const handleStatusClick = async () => {
     const nextStatusMap = {
       pending: "in-progress",
@@ -23,17 +40,27 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
       archived: "pending",
     };
     const nextStatus = nextStatusMap[task.taskStatus] || "pending";
+    
+    if (nextStatus === 'completed') {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1500);
+    }
+    
     await onUpdateStatus(task._id, nextStatus);
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      setIsDeleting(true);
-      await onDelete(task._id);
-    }
-  };
+    setIsDeleting(true);
 
-  const handleEdit = () => onEdit(task);
+    setTimeout(async () => {
+      if (window.confirm('Are you sure you want to delete this task?')) {
+        await onDelete(task._id);
+      // Brief delay to allow shake animation to play
+      } else {
+        setIsDeleting(false);
+      }
+    }, 400);
+  };
 
   const priorityColor = getPriorityColor(task.priority);
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus !== "completed";
@@ -41,122 +68,166 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
   const project = task.project;
 
   return (
-    <div
+    <motion.div
+      layout
+      variants={fadeInUp}
+      initial="hidden"
+      animate={isDeleting ? "shake" : "visible"}
+      exit="exit"
+      whileHover={{ y: -2 }}
       className={darkClass(
         cardClasses,
-        "flex justify-between p-4 rounded-xl shadow-sm transition-all duration-150",
-        task.taskStatus === "completed" ? 'opacity-60' : 'opacity-100',
-        "hover:shadow-md border border-gray-200 dark:border-dark-border"
+        "relative rounded-xl shadow-sm border-l-4 transition-all duration-200 border border-gray-200 dark:border-dark-border mb-3",
+        task.taskStatus === "completed" ? 'opacity-70' : 'opacity-100',
+        isSelected ? 'ring-2 ring-blue-500 border-blue-500' : ''
       )}
+      style={{ borderLeftColor: priorityColor.includes('#') ? priorityColor : undefined }}
     >
-      {/* Left side: checkbox + content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onSelectTask(task._id)}
-            className="h-5 w-5 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-          />
-          <StatusBadge
-            status={task.taskStatus}
-            onClick={handleStatusClick}
-            disabled={isProcessing}
-          />
-          <h3
-            className={darkClass(
-              "text-lg font-semibold break-words transition-colors",
-              task.taskStatus === "completed"
-                ? 'line-through text-gray-400 dark:text-gray-500'
-                : textClasses
-            )}
-          >
-            {task.title}
-          </h3>
-        </div>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Left: Checkbox for Selection */}
+          <div className="flex flex-col items-center gap-3 mt-1">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onSelectTask(task._id)}
+              className="h-5 w-5 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+            />
+          </div>
 
-        {task.description && (
-          <p className={darkClass("mt-1 text-sm break-words transition-colors", subtextClasses)}>
-            {task.description}
-          </p>
-        )}
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-1">
+              <StatusBadge
+                status={task.taskStatus}
+                onClick={handleStatusClick}
+                disabled={isProcessing}
+              />
+              <motion.h3
+                layout
+                className={darkClass(
+                  "text-base font-bold break-words transition-colors",
+                  task.taskStatus === "completed"
+                    ? 'line-through text-gray-400 dark:text-gray-500'
+                    : textClasses
+                )}
+              >
+                {task.title}
+                {showSuccess && <InlineSuccessCheck />}
+              </motion.h3>
 
-        {/* Meta Info Section */}
-        <div className="mt-3 flex flex-wrap items-center text-xs gap-x-4 gap-y-2">
-          {task.recurring?.enabled && (
-            <RecurringBadge recurring={task.recurring} size="sm" />
-          )}
-
-          {project && (
-            <span
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium text-white shadow-sm"
-              style={getProjectColorStyle(project.color)}
-            >
-              <Folder className="w-3 h-3 mr-1" />
-              {project.name}
-            </span>
-          )}
-          
-          <span
-            className={darkClass("inline-flex items-center px-2.5 py-0.5 rounded-full font-medium", priorityColor)}
-          >
-            <AlertCircle className="w-3 h-3 mr-1" />
-            {task.priority}
-          </span>
-
-          {task.dueDate && (
-            <span
-              className={darkClass(
-                "flex items-center",
-                isOverdue ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-gray-500 dark:text-gray-400'
+              {/* Expand Toggle for Description/Subtasks */}
+              {(task.description || task.subtasks?.length > 0) && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
               )}
-            >
-              <Calendar className="w-3 h-3 mr-1" />
-              {formatDate(task.dueDate)}
-              {isOverdue && (
-                <Clock className="w-3 h-3 ml-1" title="Overdue" />
-              )}
-            </span>
-          )}
+            </div>
 
-          {task.tags?.length > 0 && (
-            <span className="flex items-center text-gray-500 dark:text-gray-400">
-              <Tag className="w-3 h-3 mr-1" />
-              {task.tags.slice(0, 2).join(', ')}
-              {task.tags.length > 2 && (
-                <span className="ml-1 text-xs opacity-60">
-                  +{task.tags.length - 2}
+            {/* Collapsible Content */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  {task.description && (
+                    <p className={darkClass("mt-2 text-sm break-words", subtextClasses)}>
+                      {task.description}
+                    </p>
+                  )}
+                  
+                  {task.subtasks?.length > 0 && (
+                    <div className="mt-3 space-y-2 pl-2 border-l-2 border-gray-100 dark:border-gray-700">
+                      {task.subtasks.map((sub, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <div className={`w-1.5 h-1.5 rounded-full ${sub.completed ? 'bg-green-500' : 'bg-gray-300'}`} />
+                          <span className={sub.completed ? 'line-through text-gray-400' : textClasses}>
+                            {sub.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Meta Info Section (Badges) */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {project && (
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm"
+                  style={getProjectColorStyle(project.color)}
+                >
+                  <Folder className="w-3 h-3 mr-1" />
+                  {project.name.toUpperCase()}
                 </span>
               )}
-            </span>
-          )}
+
+              {task.recurring?.enabled && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                  <Repeat className="w-3 h-3 mr-1" />
+                  {task.recurring.frequency.toUpperCase()}
+                </span>
+              )}
+
+              {task.dueDate && (
+                <span className={darkClass(
+                  "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border",
+                  isOverdue 
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800' 
+                    : 'bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400 border-gray-100 dark:border-slate-700'
+                )}>
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {formatDate(task.dueDate)}
+                </span>
+              )}
+
+              {task.tags?.map((tag, i) => (
+                <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag.toUpperCase()}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex flex-col items-center gap-1 ml-2">
+            <motion.button
+              variants={buttonPress}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => onEdit(task)}
+              className="p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+              disabled={isProcessing}
+            >
+              <Edit2 size={18} />
+            </motion.button>
+            <motion.button
+              variants={buttonPress}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={handleDelete}
+              className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              disabled={isProcessing}
+            >
+              {isDeleting ? (
+                <Clock className="w-[18px] h-[18px] animate-spin" />
+              ) : (
+                <Trash2 size={18} />
+              )}
+            </motion.button>
+          </div>
         </div>
       </div>
-
-      {/* Right side: actions */}
-      <div className="flex-shrink-0 flex items-center space-x-1 ml-4">
-        <button
-          onClick={handleEdit}
-          className="p-2 text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
-          disabled={isProcessing}
-          aria-label="Edit task"
-        >
-          <Edit2 className="w-5 h-5" />
-        </button>
-        <button
-          onClick={handleDelete}
-          className="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-          disabled={isProcessing}
-          aria-label="Delete task"
-        >
-          {isDeleting ? (
-            <Clock className="w-5 h-5 animate-spin" />
-          ) : (
-            <Trash2 className="w-5 h-5" />
-          )}
-        </button>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

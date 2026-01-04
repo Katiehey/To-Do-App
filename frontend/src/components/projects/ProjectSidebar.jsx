@@ -16,16 +16,26 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
 
   const getPendingCount = (projectId) => {
     if (!projectId || !Array.isArray(tasks)) return 0;
-    return tasks.filter(t => t.project && (t.project._id === projectId || t.project.id === projectId) && t.taskStatus !== 'completed').length;
+    return tasks.filter(t => 
+      t.project && 
+      (t.project._id === projectId || t.project === projectId) && 
+      t.taskStatus !== 'completed'
+    ).length;
   };
 
   const ProjectItem = ({ project, isActive }) => {
     const projectId = project?._id || project?.id;
-    const pendingTasks = projectId ? getPendingCount(projectId) : 0;
+    const pendingTasks = getPendingCount(projectId);
 
     return (
       <button
-        onClick={() => { onProjectSelect(projectId); setIsMobileOpen(false); }}
+        // ADDED SAFETY CHECK: Ensure onProjectSelect is a function
+        onClick={() => { 
+          if (typeof onProjectSelect === 'function') {
+            onProjectSelect(projectId); 
+            setIsMobileOpen(false); 
+          }
+        }}
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm font-medium group ${
           isActive 
             ? 'bg-blue-600 text-white shadow-md' 
@@ -35,7 +45,10 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
         <div className="flex items-center space-x-3 truncate">
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 shadow-sm"
-            style={{ backgroundColor: project.color || '#3B82F6', color: '#ffffff' }}
+            style={{ 
+              backgroundColor: project.color || '#3B82F6', 
+              color: '#ffffff' 
+            }}
           >
             {project.icon || project.name.charAt(0).toUpperCase()}
           </div>
@@ -56,7 +69,10 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-dark-border">
         <h2 className={darkClass("text-xl font-bold", textClasses)}>Projects</h2>
-        <button onClick={() => { onCreateProject(); setIsMobileOpen(false); }} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition">
+        <button 
+          onClick={() => { onCreateProject(); setIsMobileOpen(false); }} 
+          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition"
+        >
           <Plus className="w-5 h-5" />
         </button>
       </div>
@@ -78,7 +94,13 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
 
       <div className="space-y-1">
         <h3 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider mb-2 px-3">Active</h3>
-        {activeProjects.map(p => <ProjectItem key={p._id || p.id} project={p} isActive={activeProjectId === (p._id || p.id)} />)}
+        {activeProjects.map(p => (
+          <ProjectItem 
+            key={p._id || p.id} 
+            project={p} 
+            isActive={activeProjectId === (p._id || p.id)} 
+          />
+        ))}
       </div>
 
       {archivedProjects.length > 0 && (
@@ -89,7 +111,13 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
           </button>
           {showArchived && (
             <div className="mt-2 space-y-1 pl-4">
-              {archivedProjects.map(p => <ProjectItem key={p._id} project={p} isActive={activeProjectId === p._id} />)}
+              {archivedProjects.map(p => (
+                <ProjectItem 
+                  key={p._id || p.id} 
+                  project={p} 
+                  isActive={activeProjectId === (p._id || p.id)} 
+                />
+              ))}
             </div>
           )}
         </div>
@@ -112,7 +140,7 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
       {isMobileOpen && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setIsMobileOpen(false)} />
-          <div className={darkClass(cardClasses, "lg:hidden fixed inset-y-0 left-0 w-72 z-50 shadow-2xl overflow-y-auto animate-in slide-in-from-left duration-300")}>
+          <div className={darkClass(cardClasses, "lg:hidden fixed inset-y-0 left-0 w-72 z-50 shadow-2xl overflow-y-auto")}>
             <SidebarContent />
           </div>
         </>

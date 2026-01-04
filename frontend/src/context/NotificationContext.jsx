@@ -8,6 +8,8 @@ import {
   checkTaskReminders,
 } from '../services/notificationService';
 import { useTask } from './TaskContext'; // 👈 import tasks from TaskContext
+import { useTheme } from './ThemeContext';
+import { darkClass, cardClasses, textClasses } from '../utils/darkMode';
 
 const NotificationContext = createContext();
 
@@ -18,6 +20,7 @@ export const useNotification = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
+  const { isDarkMode } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const notifiedTasks = useRef(new Set()); 
   const { tasks } = useTask(); // 👈 get tasks from TaskContext
@@ -97,12 +100,18 @@ export const NotificationProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [notificationsEnabled, preferences, tasks, checkAndNotify]);
 
+  const toastStyles = darkClass(
+    "fixed top-4 right-4 p-4 rounded-lg shadow-xl border", 
+    isDarkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-gray-200 text-gray-900"
+  );
+
   const value = {
     notificationsEnabled,
     preferences,
     enableNotifications,
     updatePreferences,
     checkAndNotify,
+    isDarkMode
   };
 
   return (

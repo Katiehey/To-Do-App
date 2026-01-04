@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useProject } from '../../context/ProjectContext';
-import { X, Tag, AlertTriangle, Loader, Repeat } from 'lucide-react';
+import { Tag, AlertTriangle, Loader, Repeat } from 'lucide-react';
 import DatePicker from 'react-datepicker';
+import Modal from '../common/Modal'; // ✅ Import wrapper
 import { 
   PRIORITY_LEVELS, 
   RECURRING_OPTIONS, 
   RECURRING_INTERVALS 
 } from '../../utils/constants';
-import { cardClasses, textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
+import { textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
+const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDate = null }) => {
   const { projects, fetchProjects } = useProject();
 
   useEffect(() => {
@@ -50,10 +51,10 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
           endDate: initialTask.recurring?.endDate ? new Date(initialTask.recurring.endDate) : null,
         }
       });
-    } else {
-      resetForm();
+    } else if (isOpen) {
+      resetForm(defaultDate);
     }
-  }, [initialTask, isOpen, projects]);
+  }, [initialTask, isOpen, projects, defaultDate]);
 
   const resetForm = () => {
     const defaultProj = projects.find(p => p.isDefault)?._id || '';
@@ -61,7 +62,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
       title: '',
       description: '',
       priority: 'medium',
-      dueDate: null,
+      dueDate: defaultDate || null,
       tags: '',
       project: defaultProj,
       recurring: {
@@ -116,203 +117,165 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null }) => {
       };
     }
 
-    const result = await onSubmit(taskData);
-    setLoading(false);
-
-    if (result.success) {
-      resetForm();
-      onClose();
-    } else {
-      setError(result.error || 'Failed to save task');
-    }
-  };
-
-  if (!isOpen) return null;
+    let result; if (initialTask?._id) { result = await onSubmit(initialTask._id, taskData); } else { result = await onSubmit(taskData); } setLoading(false); if (result.success) { resetForm(); onClose(); } else { setError(result.error || 'Failed to save task'); } };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
-      <div 
-        className={darkClass(cardClasses, "w-full max-w-lg my-auto p-6 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto")} 
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-dark-border mb-6">
-          <h2 className={darkClass("text-xl font-bold", textClasses)}>
-            {initialTask ? 'Edit Task' : 'Add New Task'}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition p-1">
-            <X className="w-6 h-6" />
-          </button>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={initialTask ? 'Edit Task' : 'Add New Task'}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
+            <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Title *</label>
+            <input 
+              name="title" 
+              required 
+              value={formData.title} 
+              onChange={handleChange} 
+              className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} 
+              placeholder="What needs to be done?" 
+            />
+          </div>
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Description</label>
+            <textarea 
+              name="description" 
+              value={formData.description} 
+              onChange={handleChange} 
+              rows="2" 
+              className={darkClass(inputClasses, "w-full p-2.5 rounded-lg resize-none")} 
+              placeholder="Add more details..." 
+            />
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
-              <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
-              <span>{error}</span>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Priority</label>
+            <select name="priority" value={formData.priority} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
+              {PRIORITY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Project</label>
+            <select name="project" value={formData.project} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
+              <option value="" disabled>Select Project</option>
+              {projects.filter(p => !p.isArchived).map(p => (
+                <option key={p._id} value={p._id}>{p.icon} {p.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Due Date</label>
+            <DatePicker
+              selected={formData.dueDate}
+              onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+              showTimeSelect
+              dateFormat="MMM d, yyyy h:mm aa"
+              className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}
+              placeholderText="Set deadline"
+            />
+          </div>
+          <div>
+            <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Tags</label>
+            <div className="relative">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                name="tags" 
+                value={formData.tags} 
+                onChange={handleChange} 
+                className={darkClass(inputClasses, "w-full pl-9 pr-3 py-2.5 rounded-lg")} 
+                placeholder="work, urgent" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Repeat className={darkClass("w-5 h-5", formData.recurring.enabled ? 'text-blue-600' : 'text-gray-400')} />
+              <span className={darkClass("text-sm font-semibold", textClasses)}>Recurring Task</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={formData.recurring.enabled} 
+                onChange={(e) => handleRecurringChange('enabled', e.target.checked)}
+                className="sr-only peer" 
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            </label>
+          </div>
+
+          {formData.recurring.enabled && (
+            <div className="space-y-4 bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl border border-gray-100 dark:border-slate-700">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Frequency</label>
+                  <select 
+                    value={formData.recurring.frequency} 
+                    onChange={(e) => {
+                      handleRecurringChange('frequency', e.target.value);
+                      handleRecurringChange('interval', 1);
+                    }}
+                    className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
+                  >
+                    {RECURRING_OPTIONS.slice(1).map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Every</label>
+                  <select 
+                    value={formData.recurring.interval} 
+                    onChange={(e) => handleRecurringChange('interval', e.target.value)}
+                    className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
+                  >
+                    {RECURRING_INTERVALS[formData.recurring.frequency]?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <DatePicker
+                selected={formData.recurring.endDate}
+                onChange={(date) => handleRecurringChange('endDate', date)}
+                placeholderText="Repeats indefinitely"
+                className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
+              />
             </div>
           )}
+        </div>
 
-          {/* Title & Description */}
-          <div className="space-y-4">
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Title *</label>
-              <input 
-                name="title" 
-                required 
-                value={formData.title} 
-                onChange={handleChange} 
-                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} 
-                placeholder="What needs to be done?" 
-              />
-            </div>
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Description</label>
-              <textarea 
-                name="description" 
-                value={formData.description} 
-                onChange={handleChange} 
-                rows="2" 
-                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg resize-none")} 
-                placeholder="Add more details..." 
-              />
-            </div>
-          </div>
-
-          {/* Priority & Project */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Priority</label>
-              <select name="priority" value={formData.priority} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
-                {PRIORITY_LEVELS.map(l => <option key={l.value} value={l.value} className="dark:bg-dark-card">{l.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Project</label>
-              <select name="project" value={formData.project} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
-                <option value="" disabled className="dark:bg-dark-card">Select Project</option>
-                {projects.filter(p => !p.isArchived).map(p => (
-                  <option key={p._id} value={p._id} className="dark:bg-dark-card">{p.icon} {p.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Due Date & Tags */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Due Date</label>
-              <DatePicker
-                selected={formData.dueDate}
-                onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
-                showTimeSelect
-                dateFormat="MMM d, yyyy h:mm aa"
-                autoComplete='off'
-                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}
-                placeholderText="Set deadline"
-              />
-            </div>
-            <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Tags</label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  name="tags" 
-                  value={formData.tags} 
-                  onChange={handleChange} 
-                  className={darkClass(inputClasses, "w-full pl-9 pr-3 py-2.5 rounded-lg")} 
-                  placeholder="work, urgent" 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Recurring Section */}
-          <div className="pt-4 border-t border-gray-100 dark:border-dark-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Repeat className={darkClass("w-5 h-5", formData.recurring.enabled ? 'text-blue-600' : 'text-gray-400')} />
-                <span className={darkClass("text-sm font-semibold", textClasses)}>Recurring Task</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={formData.recurring.enabled} 
-                  onChange={(e) => handleRecurringChange('enabled', e.target.checked)}
-                  className="sr-only peer" 
-                />
-                <div className="w-11 h-6 bg-gray-200 dark:bg-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            {formData.recurring.enabled && (
-              <div className="space-y-4 bg-gray-50 dark:bg-dark-bg/50 p-4 rounded-xl border border-gray-100 dark:border-dark-border">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Frequency</label>
-                    <select 
-                      value={formData.recurring.frequency} 
-                      onChange={(e) => {
-                        handleRecurringChange('frequency', e.target.value);
-                        handleRecurringChange('interval', 1);
-                      }}
-                      className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
-                    >
-                      {RECURRING_OPTIONS.slice(1).map(opt => <option key={opt.value} value={opt.value} className="dark:bg-dark-card">{opt.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Every</label>
-                    <select 
-                      value={formData.recurring.interval} 
-                      onChange={(e) => handleRecurringChange('interval', e.target.value)}
-                      className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
-                    >
-                      {RECURRING_INTERVALS[formData.recurring.frequency]?.map(opt => <option key={opt.value} value={opt.value} className="dark:bg-dark-card">{opt.label}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">End Date (Optional)</label>
-                  <DatePicker
-                    selected={formData.recurring.endDate}
-                    onChange={(date) => handleRecurringChange('endDate', date)}
-                    placeholderText="Repeats indefinitely"
-                    className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
-                  />
-                </div>
-
-                <div className="text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded-lg font-medium">
-                  Preview: {formData.recurring.interval == 1 
-                    ? formData.recurring.frequency.charAt(0).toUpperCase() + formData.recurring.frequency.slice(1)
-                    : `Every ${formData.recurring.interval} ${formData.recurring.frequency.replace('ly', 's').replace('day', 'days')}`}
-                  {formData.recurring.endDate && ` until ${formData.recurring.endDate.toLocaleDateString()}`}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex justify-end pt-4 gap-3">
-            <button 
-              type="button" 
-              onClick={() => { onClose(); resetForm(); }} 
-              className={darkClass("px-5 py-2 text-sm font-semibold transition hover:opacity-70", subtextClasses)}
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="flex items-center px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 shadow-lg shadow-blue-500/20"
-            >
-              {loading ? <><Loader className="animate-spin w-4 h-4 mr-2" /> Saving...</> : (initialTask ? 'Update Task' : 'Create Task')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end pt-4 gap-3 border-t border-gray-100 dark:border-slate-700">
+          <button 
+            type="button" 
+            onClick={() => { onClose(); resetForm(); }} 
+            className={darkClass("px-5 py-2 text-sm font-semibold", subtextClasses)}
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="flex items-center px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? <Loader className="animate-spin w-4 h-4 mr-2" /> : (initialTask ? 'Update Task' : 'Create Task')}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

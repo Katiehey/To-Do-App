@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import { TaskProvider } from './context/TaskContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { NotificationProvider } from './context/NotificationContext';
-import { ThemeProvider } from './context/ThemeContext'; // ✅ Added
+import { ThemeProvider } from './context/ThemeContext';
 
 // Components & Layout
 import Layout from './components/layout/Layout';
@@ -25,66 +26,82 @@ import NotFound from './pages/NotFound';
 import 'react-datepicker/dist/react-datepicker.css';
 import './index.css';
 
+// ✅ Separate component to handle Location and AnimatePresence
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      {/* The key={location.pathname} is the "secret sauce". 
+        It tells Framer Motion that the component has changed, 
+        triggering the exit animation of the old page and entry of the new one.
+      */}
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected App Routes */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          
+          <Route 
+            path="/tasks" 
+            element={
+              <ProtectedRoute>
+                <Tasks />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 function App() {
   return (
-    <ThemeProvider> {/* ✅ Outermost provider to control document-level classes */}
+    <ThemeProvider>
       <Router>
         <AuthProvider>
           <TaskProvider>
             <ProjectProvider>
               <NotificationProvider>
-                {/* Global PWA UI */}
                 <OfflineIndicator />
                 <InstallPrompt />
 
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+                {/* ✅ Use the AnimatedRoutes component here */}
+                <AnimatedRoutes />
 
-                  {/* Protected App Routes */}
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    
-                    <Route 
-                      path="/tasks" 
-                      element={
-                        <ProtectedRoute>
-                          <Tasks />
-                        </ProtectedRoute>
-                      } 
-                    />
-
-                    <Route
-                      path="/projects"
-                      element={
-                        <ProtectedRoute>
-                          <Projects />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/calendar"
-                      element={
-                        <ProtectedRoute>
-                          <CalendarPage />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute>
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
               </NotificationProvider>
             </ProjectProvider>
           </TaskProvider>

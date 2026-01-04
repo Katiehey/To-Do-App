@@ -73,7 +73,7 @@ const TaskCalendar = ({ tasks, onSelectTask, onSelectSlot }) => {
         onNavigate={setCurrentDate}
         onSelectEvent={(e) => onSelectTask(e.resource)}
         onSelectSlot={(slot) => onSelectSlot(slot.start)}
-        selectable
+        selectable={true}
         eventPropGetter={eventStyleGetter}
         components={{
           event: CalendarEvent,

@@ -1,135 +1,150 @@
-import { Edit2, Trash2, Archive, BarChart3, Settings } from 'lucide-react';
-import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode'; // ✅ Added
+import { motion } from 'framer-motion';
+import { Edit2, Trash2, Archive, Settings, FolderOpen, CheckCircle, BarChart3 } from 'lucide-react';
+import { hoverScale, buttonPress, fadeInUp } from '../../utils/animations';
+import { ProgressRing } from '../common/SuccessAnimation';
+import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
-const ProjectCard = ({ project, onEdit, onDelete, onArchive, onClick, onSettings }) => {
-  const completionRate = project.taskCount > 0
-    ? Math.round((project.completedTaskCount / project.taskCount) * 100)
-    : 0;
-
-  const getProjectColorClass = (color) => {
-    return color && color.match(/^#[0-9A-F]{6}$/i)
-      ? { backgroundColor: color, color: '#ffffff' }
-      : { backgroundColor: '#3B82F6', color: '#ffffff' };
-  };
+const ProjectCard = ({ project, onEdit = () => {}, onDelete = () => {}, onArchive = () => {}, onClick = () => {}, onSettings = () => {} }) => {
+  // Logic from original version to ensure data accuracy
+  const totalTasks = project.taskCount || 0;
+  const completedTasks = project.completedTaskCount || 0;
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
-    <div
-      onClick={() => onClick(project._id)}
-      className={darkClass(
-        cardClasses,
-        "p-5 flex flex-col justify-between cursor-pointer transition-all duration-300 rounded-xl",
-        "hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500",
-        project.isArchived ? 'opacity-60' : 'opacity-100'
-      )}
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      whileHover="hover"
+      className="group relative"
     >
-      {/* Top Section */}
-      <div>
-        <div className="mb-3">
-          <div className="flex items-start space-x-3">
-            <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-sm"
-              style={getProjectColorClass(project.color)}
-            >
-              {project.icon ? project.icon : null}
-            </div>
-            
-            <div className="min-w-0 flex-grow">
-              <h3 className={darkClass("text-lg font-semibold break-words transition-colors", textClasses)}>
-                {project.name}
-              </h3>
-              
+      <motion.div
+        variants={hoverScale}
+        onClick={() => onClick && onClick(project._id)}
+        className={darkClass(
+          cardClasses,
+          "relative overflow-hidden cursor-pointer transition-all duration-300 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-xl",
+          project.isArchived ? 'opacity-60' : 'opacity-100'
+        )}
+      >
+        {/* Animated Color Top-Bar */}
+        <motion.div
+          className="h-1.5 w-full"
+          style={{ backgroundColor: project.color || '#3B82F6' }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.8, ease: 'circOut' }}
+        />
+
+        <div className="p-6">
+          {/* Header & Actions */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <div 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 dark:border-white/5"
+                  style={{ backgroundColor: `${project.color}20`, color: project.color }}
+                >
+                  {project.icon ? (
+                    <span className="text-xl">{project.icon}</span>
+                  ) : (
+                    <FolderOpen size={20} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className={darkClass("text-lg font-bold truncate", textClasses)}>
+                    {project.name}
+                  </h3>
+                  <div className="flex gap-2 mt-0.5">
+                    {project.isDefault && (
+                      <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Default</span>
+                    )}
+                    {project.isArchived && (
+                      <span className="text-[10px] font-black uppercase tracking-wider text-orange-600 dark:text-orange-400">Archived</span>
+                    )}
+                  </div>
+                </div>
+              </div>
               {project.description && (
-                <p className={darkClass("text-sm mt-0.5 break-words transition-colors", subtextClasses)}>
+                <p className={darkClass("text-sm line-clamp-2", subtextClasses)}>
                   {project.description}
                 </p>
               )}
             </div>
-          </div>
-          
-          {/* Actions Group */}
-          <div className="flex space-x-1 mt-4 justify-center sm:justify-start">
-            <button
-              onClick={(e) => { e.stopPropagation(); onSettings(project); }}
-              className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
 
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-              className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-              title="Quick Edit"
-            >
-              <Edit2 className="w-5 h-5" />
-            </button>
-            
-            <button
-              onClick={(e) => { e.stopPropagation(); onArchive(project._id); }}
-              className="p-2 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
-              title={project.isArchived ? "Unarchive project" : "Archive project"}
-            >
-              <Archive className="w-5 h-5" />
-            </button>
-            
-            {!project.isDefault && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(project._id); }}
-                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title="Delete project"
+            {/* Floating Action Menu (Reveals on Hover) */}
+            <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+              <motion.button
+                variants={buttonPress}
+                onClick={(e) => { e.stopPropagation(); onSettings(project); }}
+                className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
               >
-                <Trash2 className="w-5 h-5" />
-              </button>
+                <Settings size={16} />
+              </motion.button>
+              <motion.button
+                variants={buttonPress}
+                onClick={(e) => { e.stopPropagation(); onEdit(project); }}
+                className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <Edit2 size={16} />
+              </motion.button>
+              <motion.button
+                variants={buttonPress}
+                onClick={(e) => { e.stopPropagation(); onArchive(project._id); }}
+                className="p-2 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              >
+                <Archive size={16} />
+              </motion.button>
+              {!project.isDefault && (
+                <motion.button
+                  variants={buttonPress}
+                  onClick={(e) => { e.stopPropagation(); onDelete(project._id); }}
+                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 size={16} />
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {/* Progress & Stats Footer */}
+          <div className="pt-4 border-t border-gray-50 dark:border-slate-700/50 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <ProgressRing 
+                progress={progress} 
+                size={50} 
+                colorClass={progress === 100 ? "text-green-500" : "text-blue-500"} 
+              />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className={darkClass("text-sm font-bold", textClasses)}>{completedTasks} / {totalTasks}</span>
+                  <CheckCircle size={12} className="text-green-500" />
+                </div>
+                <p className={darkClass("text-[10px] font-bold uppercase tracking-tighter opacity-60", subtextClasses)}>
+                  Tasks Completed
+                </p>
+              </div>
+            </div>
+
+            {/* Completion Status */}
+            {progress === 100 && totalTasks > 0 ? (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full"
+              >
+                <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
+              </motion.div>
+            ) : (
+              <div className="text-right">
+                <BarChart3 size={18} className="text-gray-300 dark:text-slate-600 ml-auto" />
+              </div>
             )}
           </div>
         </div>
-      </div>
-      
-      {/* Bottom Section */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-        <div className="grid grid-cols-3 gap-3 text-center mb-4">
-          <div>
-            <div className={darkClass("text-xl font-bold transition-colors", textClasses)}>{project.taskCount || 0}</div>
-            <div className={darkClass("text-xs transition-colors", subtextClasses)}>Total</div>
-          </div>
-          
-          <div>
-            <div className="text-xl font-bold text-green-600 dark:text-green-400">{project.completedTaskCount || 0}</div>
-            <div className={darkClass("text-xs transition-colors", subtextClasses)}>Done</div>
-          </div>
-          
-          <div>
-            <div className="text-xl font-bold text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <BarChart3 className="w-4 h-4 mr-1" />
-              {completionRate}%
-            </div>
-            <div className={darkClass("text-xs transition-colors", subtextClasses)}>Progress</div>
-          </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-100 dark:bg-dark-border rounded-full h-2 mb-3 overflow-hidden">
-          <div
-            className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${completionRate}%` }}
-          ></div>
-        </div>
-        
-        {/* Badges */}
-        <div className="flex space-x-2">
-          {project.isDefault && (
-            <span className="px-2.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
-              Default
-            </span>
-          )}
-          {project.isArchived && (
-            <span className="px-2.5 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 rounded-full">
-              Archived
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
