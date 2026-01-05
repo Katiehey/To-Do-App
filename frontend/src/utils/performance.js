@@ -16,33 +16,31 @@ export const debounce = (func, wait = 300) => {
 
 /**
  * Throttle function - limits execution to once per wait time
- * Perfect for scroll handlers, mouse move
+ * Updated to ensure the latest arguments are always used.
  */
 export const throttle = (func, wait = 100) => {
-  let timeout;
-  let previous = 0;
-  
-  return function executedFunction(...args) {
-    const now = Date.now();
-    const remaining = wait - (now - previous);
-    
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      previous = now;
-      func(...args);
-    } else if (!timeout) {
-      timeout = setTimeout(() => {
-        previous = Date.now();
-        timeout = null;
-        func(...args);
-      }, remaining);
+  let timeout = null;
+  let latestArgs = null;
+
+  const updater = () => {
+    if (latestArgs) {
+      func.apply(null, latestArgs);
+      latestArgs = null;
+      timeout = setTimeout(updater, wait);
+    } else {
+      timeout = null;
+    }
+  };
+
+  return function(...args) {
+    if (!timeout) {
+      func.apply(null, args);
+      timeout = setTimeout(updater, wait);
+    } else {
+      latestArgs = args;
     }
   };
 };
-
 /**
  * Lazy load images with Intersection Observer
  */

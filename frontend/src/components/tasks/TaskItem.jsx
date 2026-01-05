@@ -126,6 +126,7 @@ const TaskItem = forwardRef(({
               {(task.description || task.subtasks?.length > 0) && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
+                  aria-label="chevron-down"
                   className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
                   {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

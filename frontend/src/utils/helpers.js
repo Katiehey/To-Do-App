@@ -47,3 +47,36 @@ export const getPriorityBadge = (priority) => {
   };
   return badges[priority] || badges.low;
 };
+
+
+// src/utils/helpers.js
+
+export const truncateText = (text, limit) => {
+  if (!text) return '';
+  return text.length > limit ? text.substring(0, limit).trim() + '...' : text;
+};
+
+export const isOverdue = (date) => {
+  if (!date) return false;
+  return new Date(date) < new Date();
+};
+
+export const getCompletionPercentage = (tasks) => {
+  if (!tasks || tasks.length === 0) return 0;
+  const completed = tasks.filter(t => t.status === 'completed' || t.taskStatus === 'completed').length;
+  return Math.round((completed / tasks.length) * 100);
+};
+
+export const sortByPriority = (tasks) => {
+  const weights = { high: 3, medium: 2, low: 1 };
+  return [...tasks].sort((a, b) => weights[b.priority] - weights[a.priority]);
+};
+
+export const groupByProject = (tasks) => {
+  return tasks.reduce((acc, task) => {
+    const key = task.projectId || 'unassigned';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(task);
+    return acc;
+  }, {});
+};
