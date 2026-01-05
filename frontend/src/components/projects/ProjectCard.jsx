@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { Edit2, Trash2, Archive, Settings, FolderOpen, CheckCircle, BarChart3 } from 'lucide-react';
-import { hoverScale, buttonPress, fadeInUp } from '../../utils/animations';
+import { hoverScale, fadeInUp } from '../../utils/animations';
 import { ProgressRing } from '../common/SuccessAnimation';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
+import { TooltipIconButton } from '../common/Tooltip';
 
 const ProjectCard = ({ project, onEdit = () => {}, onDelete = () => {}, onArchive = () => {}, onClick = () => {}, onSettings = () => {} }) => {
-  // Logic from original version to ensure data accuracy
   const totalTasks = project.taskCount || 0;
   const completedTasks = project.completedTaskCount || 0;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -28,7 +28,7 @@ const ProjectCard = ({ project, onEdit = () => {}, onDelete = () => {}, onArchiv
           project.isArchived ? 'opacity-60' : 'opacity-100'
         )}
       >
-        {/* Animated Color Top-Bar */}
+        {/* Top bar */}
         <motion.div
           className="h-1.5 w-full"
           style={{ backgroundColor: project.color || '#3B82F6' }}
@@ -73,37 +73,43 @@ const ProjectCard = ({ project, onEdit = () => {}, onDelete = () => {}, onArchiv
               )}
             </div>
 
-            {/* Floating Action Menu (Reveals on Hover) */}
+            {/* Floating Action Menu */}
             <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-              <motion.button
-                variants={buttonPress}
-                onClick={(e) => { e.stopPropagation(); onSettings(project); }}
-                className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
-              >
-                <Settings size={16} />
-              </motion.button>
-              <motion.button
-                variants={buttonPress}
-                onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <Edit2 size={16} />
-              </motion.button>
-              <motion.button
-                variants={buttonPress}
-                onClick={(e) => { e.stopPropagation(); onArchive(project._id); }}
-                className="p-2 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
-              >
-                <Archive size={16} />
-              </motion.button>
+              <TooltipIconButton
+                icon={Settings}
+                tooltip="Project settings"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSettings(project);
+                }}
+              />
+              <TooltipIconButton
+                icon={Edit2}
+                tooltip="Edit project"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(project);
+                }}
+              />
+              <TooltipIconButton
+                icon={Archive}
+                tooltip="Archive project"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onArchive(project._id);
+                }}
+                variant="warning"
+              />
               {!project.isDefault && (
-                <motion.button
-                  variants={buttonPress}
-                  onClick={(e) => { e.stopPropagation(); onDelete(project._id); }}
-                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 size={16} />
-                </motion.button>
+                <TooltipIconButton
+                  icon={Trash2}
+                  tooltip="Delete project"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(project._id);
+                  }}
+                  variant="danger"
+                />
               )}
             </div>
           </div>
@@ -127,7 +133,6 @@ const ProjectCard = ({ project, onEdit = () => {}, onDelete = () => {}, onArchiv
               </div>
             </div>
 
-            {/* Completion Status */}
             {progress === 100 && totalTasks > 0 ? (
               <motion.div
                 initial={{ scale: 0 }}

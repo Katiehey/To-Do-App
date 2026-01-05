@@ -4,6 +4,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 import { Repeat } from 'lucide-react';
 import { cardClasses, darkClass } from '../../utils/darkMode';
+import { NoCalendarEventsState } from '../common/EmptyState';   // ✅ import empty state
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = { 'en-US': enUS };
@@ -36,7 +37,6 @@ const TaskCalendar = ({ tasks, onSelectTask, onSelectSlot }) => {
     const task = event.resource;
     const isCompleted = task.taskStatus === 'completed';
     
-    // Updated Priority Hex Map for better contrast in both modes
     const priorityMap = {
       high: { bg: '#FEE2E2', border: '#EF4444', text: '#991B1B', darkBg: '#450a0a', darkText: '#fecaca' },
       medium: { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E', darkBg: '#451a03', darkText: '#fef3c7' },
@@ -61,6 +61,11 @@ const TaskCalendar = ({ tasks, onSelectTask, onSelectSlot }) => {
       }
     };
   }, []);
+
+  // ✅ Empty state check
+  if (events.length === 0) {
+    return <NoCalendarEventsState />;
+  }
 
   return (
     <div className={darkClass(cardClasses, "p-4 rounded-xl shadow-sm transition-colors duration-300")} style={{ height: '700px' }}>

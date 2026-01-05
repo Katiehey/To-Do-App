@@ -1,15 +1,37 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Search, X, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { PRIORITY_LEVELS } from '../../utils/constants';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
+import { debounce } from '../../utils/performance'; // ✅ Added performance import
 
 const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.search || '');
 
+  // 1. Setup the debounced search function
+  // We use useCallback so the function isn't recreated on every render
+  const debouncedSearch = useCallback(
+    debounce((query) => {
+      onFilterChange({ search: query, page: 1 });
+    }, 300),
+    [onFilterChange]
+  );
+
+  // 2. Sync local input with filter state (e.g., if filters are cleared externally)
+  useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value); // Update UI immediately for responsiveness
+    debouncedSearch(value); // Trigger debounced filter logic
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchInput !== filters.search) onFilterChange({ search: searchInput, page: 1 });
+    // Manual submit still works if user hits Enter
+    onFilterChange({ search: searchInput, page: 1 });
   };
 
   const handleFilterChange = (key, value) => onFilterChange({ [key]: value, page: 1 });
@@ -21,7 +43,6 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
 
   const hasActiveFilters = filters.search || filters.priority || filters.taskStatus || filters.project;
 
-  // Optimized base for inputs and selects
   const inputBase = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm transition-all";
 
   return (
@@ -35,7 +56,7 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
             type="text"
             placeholder="Search tasks..."
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={handleInputChange} // ✅ Now uses the debounced handler
             className={`pl-10 ${inputBase}`}
           />
         </form>

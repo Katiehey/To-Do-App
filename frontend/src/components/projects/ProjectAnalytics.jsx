@@ -52,9 +52,7 @@ const ProjectAnalytics = ({ projectId, onClose }) => {
       <div className="flex items-center space-x-2 mb-2">
         <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         <h2 className={darkClass("text-xl font-bold", textClasses)}>Project Analytics</h2>
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" >
-          ✕
-        </button>
+        
       </div>
 
       {/* Overview Cards */}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Loader } from 'lucide-react';
-import Modal from '../common/Modal'; // ✅ Import wrapper
+import Modal from '../common/Modal';
 import { textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
+import { announceToScreenReader } from '../../utils/accessibility'; // ✅ Added accessibility utility
 
 const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
   const [formData, setFormData] = useState({
@@ -56,15 +57,27 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!formData.name.trim()) {
-      setError('Project name is required');
+      const errorMsg = 'Project name is required';
+      setError(errorMsg);
+      announceToScreenReader(`Error: ${errorMsg}`); // ✅ Announce validation error
       return;
     }
+
     setLoading(true);
     const result = await onSubmit({ ...formData, color: formData.color || '#3B82F6' });
     setLoading(false);
-    if (result.success) onClose(); 
-    else setError(result.error || 'Failed to save project');
+
+    if (result.success) {
+      // ✅ Announce success based on context
+      announceToScreenReader(initialProject ? 'Project updated successfully' : 'New project created successfully');
+      onClose(); 
+    } else {
+      const errorMsg = result.error || 'Failed to save project';
+      setError(errorMsg);
+      announceToScreenReader(`Error: ${errorMsg}`); // ✅ Announce server error
+    }
   };
 
   return (
@@ -76,17 +89,23 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="flex items-center p-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
+          <div 
+            className="flex items-center p-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30"
+            role="alert" // ✅ Added ARIA role for immediate feedback
+          >
             <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
         
         <div>
-          <label className={darkClass("block text-sm font-medium mb-1", textClasses)}>Project Name *</label>
+          <label className={darkClass("block text-sm font-medium mb-1", textClasses)}>
+            Project Name *
+          </label>
           <input
             type="text"
             name="name"
+            autoFocus // ✅ Focus management for accessibility
             value={formData.name}
             onChange={handleChange}
             className={darkClass(inputClasses, "w-full px-3 py-2 rounded-lg")}
@@ -95,6 +114,7 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
           />
         </div>
 
+        {/* ... rest of the form components remain unchanged ... */}
         <div>
           <label className={darkClass("block text-sm font-medium mb-1", textClasses)}>Description</label>
           <textarea
@@ -109,11 +129,13 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
 
         <div>
           <label className={darkClass("block text-sm font-medium mb-2", textClasses)}>Color</label>
-          <div className="grid grid-cols-8 gap-2">
+          <div className="grid grid-cols-8 gap-2" role="radiogroup" aria-label="Project Color">
             {colorOptions.map(color => (
               <button
                 key={color.value}
                 type="button"
+                aria-label={color.name}
+                aria-pressed={formData.color === color.value}
                 onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
                 className={`h-7 rounded-md transition-all border-2 ${
                   formData.color === color.value ? 'border-slate-400 scale-110' : 'border-transparent'
@@ -126,11 +148,13 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
 
         <div>
           <label className={darkClass("block text-sm font-medium mb-2", textClasses)}>Icon</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Project Icon">
             {iconOptions.map(icon => (
               <button
                 key={icon.value}
                 type="button"
+                aria-label={icon.name}
+                aria-pressed={formData.icon === icon.value}
                 onClick={() => setFormData(prev => ({ ...prev, icon: icon.value }))}
                 className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-all ${
                   formData.icon === icon.value ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 dark:border-slate-700'
@@ -144,7 +168,11 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialProject = null }) => {
 
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100 dark:border-slate-700">
           <button type="button" onClick={onClose} className={subtextClasses}>Cancel</button>
-          <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50" disabled={loading}>
+          <button 
+            type="submit" 
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50" 
+            disabled={loading}
+          >
             {loading ? <Loader className="w-5 h-5 animate-spin" /> : 'Save'}
           </button>
         </div>

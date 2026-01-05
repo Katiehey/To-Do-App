@@ -1,3 +1,4 @@
+import { useEffect } from 'react'; // ✅ Added useEffect to imports
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
@@ -5,6 +6,8 @@ import { TaskProvider } from './context/TaskContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { HelmetProvider } from 'react-helmet-async';
+import { throttle } from './utils/performance'; // ✅ Added throttle import
 
 // Components & Layout
 import Layout from './components/layout/Layout';
@@ -26,16 +29,11 @@ import NotFound from './pages/NotFound';
 import 'react-datepicker/dist/react-datepicker.css';
 import './index.css';
 
-// ✅ Separate component to handle Location and AnimatePresence
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">
-      {/* The key={location.pathname} is the "secret sauce". 
-        It tells Framer Motion that the component has changed, 
-        triggering the exit animation of the old page and entry of the new one.
-      */}
       <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
@@ -89,25 +87,39 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  // ✅ Integrated throttle scroll logic
+  useEffect(() => {
+    const handleScroll = throttle(() => {
+      // Logic for global scroll effects can go here
+      // Example: Dispatching a custom event or checking window.scrollY
+      // console.log("Throttled scroll:", window.scrollY);
+    }, 100);
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <ThemeProvider>
-      <Router>
-        <AuthProvider>
-          <TaskProvider>
-            <ProjectProvider>
-              <NotificationProvider>
-                <OfflineIndicator />
-                <InstallPrompt />
+    <HelmetProvider>
+      <ThemeProvider>
+        <Router>
+          <AuthProvider>
+            <TaskProvider>
+              <ProjectProvider>
+                <NotificationProvider>
+                  <OfflineIndicator />
+                  <InstallPrompt />
 
-                {/* ✅ Use the AnimatedRoutes component here */}
-                <AnimatedRoutes />
+                  {/* ✅ The AnimatedRoutes component is preserved here */}
+                  <AnimatedRoutes />
 
-              </NotificationProvider>
-            </ProjectProvider>
-          </TaskProvider>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+                </NotificationProvider>
+              </ProjectProvider>
+            </TaskProvider>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

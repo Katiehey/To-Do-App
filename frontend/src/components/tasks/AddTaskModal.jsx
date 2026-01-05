@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Tag, AlertTriangle, Loader, Repeat } from 'lucide-react';
 import DatePicker from 'react-datepicker';
-import Modal from '../common/Modal'; // ✅ Import wrapper
+import Modal from '../common/Modal';
 import { 
   PRIORITY_LEVELS, 
   RECURRING_OPTIONS, 
   RECURRING_INTERVALS 
 } from '../../utils/constants';
 import { textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
+import { announceToScreenReader } from '../../utils/accessibility'; // ✅ Added accessibility import
 
 const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDate = null }) => {
   const { projects, fetchProjects } = useProject();
@@ -92,6 +93,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     e.preventDefault();
     if (!formData.title.trim()) {
       setError('Title is required');
+      announceToScreenReader('Error: Title is required'); // ✅ Announce validation error
       return;
     }
 
@@ -117,7 +119,26 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
       };
     }
 
-    let result; if (initialTask?._id) { result = await onSubmit(initialTask._id, taskData); } else { result = await onSubmit(taskData); } setLoading(false); if (result.success) { resetForm(); onClose(); } else { setError(result.error || 'Failed to save task'); } };
+    let result; 
+    if (initialTask?._id) { 
+      result = await onSubmit(initialTask._id, taskData); 
+    } else { 
+      result = await onSubmit(taskData); 
+    } 
+    
+    setLoading(false); 
+    
+    if (result.success) { 
+      // ✅ Integrated Announcements
+      announceToScreenReader(initialTask ? 'Task updated successfully' : 'New task created successfully');
+      resetForm(); 
+      onClose(); 
+    } else { 
+      const errorMsg = result.error || 'Failed to save task';
+      setError(errorMsg); 
+      announceToScreenReader(`Error: ${errorMsg}`); // ✅ Announce API error
+    } 
+  };
 
   return (
     <Modal 
@@ -128,7 +149,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
+          <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30" role="alert">
             <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -140,6 +161,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
             <input 
               name="title" 
               required 
+              autoFocus // ✅ Helpful for keyboard accessibility
               value={formData.title} 
               onChange={handleChange} 
               className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} 

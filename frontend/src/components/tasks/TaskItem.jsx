@@ -1,23 +1,22 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react'; // ✅ Import forwardRef correctly
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trash2, 
   Edit2, 
   Calendar, 
   Tag, 
-  AlertCircle, 
   Clock, 
   Folder, 
   ChevronDown, 
   ChevronUp, 
-  Repeat,
-  Check
+  Repeat
 } from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
 import StatusBadge from './StatusBadge';
 import { InlineSuccessCheck } from '../common/SuccessAnimation';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
-import { fadeInUp, buttonPress, shakeVariants } from '../../utils/animations';
+import { fadeInUp } from '../../utils/animations';
+import { TooltipIconButton } from '../common/Tooltip';   
 
 // Helper for project color style
 const getProjectColorStyle = (color) => {
@@ -26,12 +25,21 @@ const getProjectColorStyle = (color) => {
     : { backgroundColor: '#3B82F6', color: '#ffffff' }; 
 };
 
-const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelectTask }) => {
+// ✅ Wrap the entire component in forwardRef
+// ✅ (props, ref) must be the arguments
+const TaskItem = forwardRef(({ 
+  task, 
+  onUpdateStatus, 
+  onEdit, 
+  onDelete, 
+  isSelected, 
+  onSelectTask 
+}, ref) => {
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Original status rotation logic
   const handleStatusClick = async () => {
     const nextStatusMap = {
       pending: "in-progress",
@@ -51,11 +59,9 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
 
   const handleDelete = async () => {
     setIsDeleting(true);
-
     setTimeout(async () => {
       if (window.confirm('Are you sure you want to delete this task?')) {
         await onDelete(task._id);
-      // Brief delay to allow shake animation to play
       } else {
         setIsDeleting(false);
       }
@@ -69,6 +75,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
 
   return (
     <motion.div
+      ref={ref} // ✅ Ref is now correctly received and attached
       layout
       variants={fadeInUp}
       initial="hidden"
@@ -85,7 +92,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
-          {/* Left: Checkbox for Selection */}
+          {/* Left: Checkbox */}
           <div className="flex flex-col items-center gap-3 mt-1">
             <input
               type="checkbox"
@@ -95,7 +102,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
             />
           </div>
 
-          {/* Main Content Area */}
+          {/* Main Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1">
               <StatusBadge
@@ -116,7 +123,6 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
                 {showSuccess && <InlineSuccessCheck />}
               </motion.h3>
 
-              {/* Expand Toggle for Description/Subtasks */}
               {(task.description || task.subtasks?.length > 0) && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
@@ -127,7 +133,6 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
               )}
             </div>
 
-            {/* Collapsible Content */}
             <AnimatePresence>
               {isExpanded && (
                 <motion.div
@@ -141,7 +146,6 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
                       {task.description}
                     </p>
                   )}
-                  
                   {task.subtasks?.length > 0 && (
                     <div className="mt-3 space-y-2 pl-2 border-l-2 border-gray-100 dark:border-gray-700">
                       {task.subtasks.map((sub, idx) => (
@@ -158,7 +162,7 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
               )}
             </AnimatePresence>
 
-            {/* Meta Info Section (Badges) */}
+            {/* Meta Info */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {project && (
                 <span
@@ -169,14 +173,12 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
                   {project.name.toUpperCase()}
                 </span>
               )}
-
               {task.recurring?.enabled && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                   <Repeat className="w-3 h-3 mr-1" />
                   {task.recurring.frequency.toUpperCase()}
                 </span>
               )}
-
               {task.dueDate && (
                 <span className={darkClass(
                   "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border",
@@ -188,7 +190,6 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
                   {formatDate(task.dueDate)}
                 </span>
               )}
-
               {task.tags?.map((tag, i) => (
                 <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
                   <Tag className="w-3 h-3 mr-1" />
@@ -200,35 +201,28 @@ const TaskItem = ({ task, onUpdateStatus, onEdit, onDelete, isSelected, onSelect
 
           {/* Right: Actions */}
           <div className="flex flex-col items-center gap-1 ml-2">
-            <motion.button
-              variants={buttonPress}
-              whileHover="hover"
-              whileTap="tap"
+            <TooltipIconButton
+              icon={Edit2}
+              tooltip="Edit task"
               onClick={() => onEdit(task)}
-              className="p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+              variant="default"
               disabled={isProcessing}
-            >
-              <Edit2 size={18} />
-            </motion.button>
-            <motion.button
-              variants={buttonPress}
-              whileHover="hover"
-              whileTap="tap"
+            />
+            <TooltipIconButton
+              icon={isDeleting ? Clock : Trash2}
+              tooltip="Delete task"
               onClick={handleDelete}
-              className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              variant="danger"
               disabled={isProcessing}
-            >
-              {isDeleting ? (
-                <Clock className="w-[18px] h-[18px] animate-spin" />
-              ) : (
-                <Trash2 size={18} />
-              )}
-            </motion.button>
+            />
           </div>
         </div>
       </div>
     </motion.div>
   );
-};
+});
+
+// ✅ Added DisplayName for easier debugging
+TaskItem.displayName = 'TaskItem';
 
 export default TaskItem;

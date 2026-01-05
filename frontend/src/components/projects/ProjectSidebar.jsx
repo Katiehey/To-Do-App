@@ -1,14 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // ✅ Added useEffect
 import { Folder, Plus, ChevronDown, ChevronRight, Archive, Menu, X } from 'lucide-react';
 import { useTask } from '../../context/TaskContext';
 import { useProject } from '../../context/ProjectContext';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
+import { throttle } from '../../utils/performance'; // ✅ Added performance import
 
 const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, className = '' }) => {
   const { tasks } = useTask();
   const { projects } = useProject();
   const [showArchived, setShowArchived] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [sidebarScrolled, setSidebarScrolled] = useState(false); // ✅ Local scroll state
+
+  // ✅ Integrated Throttled Scroll Logic
+  useEffect(() => {
+    const handleScroll = throttle(() => {
+      // Useful for adding a header shadow inside the sidebar
+      const sidebarElement = document.getElementById('project-sidebar-content');
+      if (sidebarElement && sidebarElement.scrollTop > 10) {
+        setSidebarScrolled(true);
+      } else {
+        setSidebarScrolled(false);
+      }
+    }, 100);
+
+    // Attach to the specific sidebar container if it exists
+    const sidebarElement = document.getElementById('project-sidebar-content');
+    if (sidebarElement) {
+      sidebarElement.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (sidebarElement) sidebarElement.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const activeProjects = Array.isArray(projects) ? projects.filter(p => !p.isArchived) : [];
   const archivedProjects = Array.isArray(projects) ? projects.filter(p => p.isArchived) : [];
@@ -29,7 +54,6 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
 
     return (
       <button
-        // ADDED SAFETY CHECK: Ensure onProjectSelect is a function
         onClick={() => { 
           if (typeof onProjectSelect === 'function') {
             onProjectSelect(projectId); 
@@ -66,8 +90,14 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
   };
 
   const SidebarContent = () => (
-    <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-dark-border">
+    <div 
+      id="project-sidebar-content" 
+      className="h-full overflow-y-auto p-4 space-y-4"
+    >
+      {/* Dynamic Header Shadow based on scroll */}
+      <div className={`sticky top-0 bg-inherit z-10 flex justify-between items-center pb-2 mb-2 border-b transition-shadow ${
+        sidebarScrolled ? 'shadow-sm border-blue-100 dark:border-blue-900/30' : 'border-gray-100 dark:border-dark-border'
+      }`}>
         <h2 className={darkClass("text-xl font-bold", textClasses)}>Projects</h2>
         <button 
           onClick={() => { onCreateProject(); setIsMobileOpen(false); }} 
@@ -132,7 +162,7 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
       </button>
 
       <div className={`hidden lg:block lg:w-64 flex-shrink-0 ${className}`}>
-        <div className={darkClass(cardClasses, "h-full rounded-xl shadow-lg transition-colors")}>
+        <div className={darkClass(cardClasses, "h-full rounded-xl shadow-lg transition-colors overflow-hidden")}>
           <SidebarContent />
         </div>
       </div>
@@ -140,7 +170,7 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
       {isMobileOpen && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setIsMobileOpen(false)} />
-          <div className={darkClass(cardClasses, "lg:hidden fixed inset-y-0 left-0 w-72 z-50 shadow-2xl overflow-y-auto")}>
+          <div className={darkClass(cardClasses, "lg:hidden fixed inset-y-0 left-0 w-72 z-50 shadow-2xl overflow-hidden")}>
             <SidebarContent />
           </div>
         </>

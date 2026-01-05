@@ -1,36 +1,72 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
+import { addKeyboardShortcut } from '../../utils/accessibility'; // ✅ Added accessibility utility
 
 const KeyboardShortcuts = ({ onNewTask, onFocusSearch, onSelectAll, onClearSelection }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Added Ctrl/Cmd + K to the display list
   const shortcuts = [
     { key: 'N', description: 'Create new task' },
     { key: '/', description: 'Focus search' },
+    { key: 'Ctrl/Cmd + K', description: 'Quick search modal' },
     { key: 'Ctrl/Cmd + A', description: 'Select all visible tasks' },
     { key: 'Esc', description: 'Clear selection / Close modal' },
     { key: '?', description: 'Show keyboard shortcuts' },
   ];
 
+  // ✅ Integrated addKeyboardShortcut for Search
+  useEffect(() => {
+    // Standardizing the Cmd/Ctrl + K shortcut via utility
+    const removeShortcut = addKeyboardShortcut('k', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        onFocusSearch?.();
+      }
+    }, 'Open search');
+    
+    return removeShortcut;
+  }, [onFocusSearch]);
+
   useEffect(() => {
     const handleKeydown = (event) => {
-      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey) onNewTask?.();
+      // 1. New Task (N)
+      if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey) {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+          onNewTask?.();
+        }
+      }
+      
+      // 2. Focus Search (/)
       if (event.key === '/' && !event.shiftKey && !event.metaKey && !event.ctrlKey && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
         event.preventDefault();
         onFocusSearch?.();
       }
+
+      // 3. Select All (Ctrl/Cmd + A)
       if (event.key.toLowerCase() === 'a' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         onSelectAll?.();
       }
+
+      // 4. Close/Clear (Esc)
       if (event.key === 'Escape') {
-        if (isOpen) setIsOpen(false); else onClearSelection?.();
+        if (isOpen) {
+          setIsOpen(false);
+        } else {
+          onClearSelection?.();
+        }
       }
-      if ((event.key === '/' || event.code === 'Slash') && event.shiftKey && !isOpen) {
-        setIsOpen(true);
-        event.preventDefault();
+
+      // 5. Help Menu (?) - Shift + /
+      if ((event.key === '?' || (event.code === 'Slash' && event.shiftKey)) && !isOpen) {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+          setIsOpen(true);
+          event.preventDefault();
+        }
       }
+      
     };
 
     document.addEventListener('keydown', handleKeydown);
@@ -42,7 +78,7 @@ const KeyboardShortcuts = ({ onNewTask, onFocusSearch, onSelectAll, onClearSelec
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 p-3 bg-gray-800 dark:bg-blue-600 text-white rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-blue-700 transition-all z-30"
-        title="Keyboard shortcuts"
+        title="Keyboard shortcuts (?)"
       >
         <Keyboard className="w-6 h-6" />
       </button>
@@ -50,8 +86,14 @@ const KeyboardShortcuts = ({ onNewTask, onFocusSearch, onSelectAll, onClearSelec
   }
 
   return (
-    <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className={darkClass(cardClasses, "w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden")}>
+    <div 
+      className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={() => setIsOpen(false)}
+    >
+      <div 
+        className={darkClass(cardClasses, "w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden")}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+      >
         
         <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-slate-700">
           <h2 className={darkClass("text-xl font-semibold flex items-center space-x-2", textClasses)}>
