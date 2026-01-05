@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 // Security Middleware
 app.use(helmet()); 
 app.use(cors({  
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [process.env.CLIENT_URL, 'http://localhost:5173', process.env.TEST_URL, 'http://localhost:4173'].filter(Boolean),
   credentials: true,
 }));
 
