@@ -2,6 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { ProjectProvider } from '../context/ProjectContext';
+import { AuthProvider } from '../context/AuthContext';
 // Import your real providers here (adjust paths to your project)
 // import { AuthProvider } from '@/context/AuthContext';
 // import { TaskProvider } from '@/context/TaskContext';
@@ -52,18 +54,14 @@ export const typeIntoInput = async (element, text) => {
 const AllTheProviders = ({ children }) => {
   return (
     <BrowserRouter>
-      {/* Wrap with your actual Context Providers here. 
-          Example:
-          <AuthProvider value={{ user: mockUser }}>
-            <TaskProvider>
-              {children}
-            </TaskProvider>
-          </AuthProvider>
-      */}
-      {children}
+      <AuthProvider>
+        <ProjectProvider> {/* <--- Add this here */}
+          {children}
+        </ProjectProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
-};
+};;
 
 const renderWithProviders = (ui, options) =>
   render(ui, { wrapper: AllTheProviders, ...options });

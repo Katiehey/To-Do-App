@@ -208,16 +208,23 @@ const Tasks = () => {
           </div>
 
           <BulkActionsBar 
-            selectedCount={selectedTasks.length}
-            totalCount={tasks.length}
-            onMarkComplete={() => handleBulkStatusUpdate('completed')}
-            onMarkIncomplete={() => handleBulkStatusUpdate('pending')}
-            onDelete={handleBulkDelete}
-            onMoveToProject={handleBulkMove}
-            onClear={clearSelection}
-            onSelectAll={selectAllTasks}
-            projects={projects}
-          />
+  selectedCount={selectedTasks.length}
+  totalCount={tasks.length}
+  onMarkComplete={() => handleBulkStatusUpdate('completed')}
+  onMarkIncomplete={() => handleBulkStatusUpdate('pending')}
+  onDelete={handleBulkDelete}
+  onMoveToProject={handleBulkMove}
+  onClear={clearSelection}
+  // CHANGE THIS:
+  onSelectAll={() => {
+    if (selectedTasks.length === tasks.length) {
+      clearSelection();
+    } else {
+      selectAllTasks();
+    }
+  }}
+  projects={projects}
+/>
 
           {/* MODALS */}
           <AddTaskModal 

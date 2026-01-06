@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:unit": "vitest run --reporter=verbose src/**/*.test.{js,jsx}",
-    "test:integration": "vitest run --reporter=verbose src/**/*.integration.test.{js,jsx}",
+    "test:integration": "vitest run --reporter=verbose \"src/**/__tests__/*.integration.test.*\"",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
@@ -32,6 +32,7 @@
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-big-calendar": "^1.8.5",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.4",
     "react-router-dom": "^6.20.1"
