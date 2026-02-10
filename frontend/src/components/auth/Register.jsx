@@ -78,11 +78,6 @@ const Register = () => {
 };
 
 useEffect(() => {
-  console.log('📱 Mobile debug info:');
-  console.log('User Agent:', navigator.userAgent);
-  console.log('Platform:', navigator.platform);
-  console.log('Screen:', `${window.screen.width}x${window.screen.height}`);
-  
   // Test API connection
   fetch('https://taskmaster-pro-backend-vqwm.onrender.com/api/health')
     .then(r => r.json())
