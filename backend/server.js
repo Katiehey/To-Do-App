@@ -36,34 +36,38 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 // Security Middleware
 app.use(helmet()); 
 
-const allowedOrigins = [
-  'https://taskmaster-pro-version.netlify.app',
-  'http://localhost:5173',
-  'http://localhost:4173',
-];
-
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://taskmaster-pro-version.netlify.app',
+      'http://localhost:5173',
+      'http://localhost:4173',
+    ];
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
+    } else {
+      console.error('CORS blocked for origin:', origin);
+      return callback(new Error('CORS policy: Origin not allowed'), false);
     }
-    
-    const msg = `CORS error: Origin ${origin} not allowed`;
-    console.error(msg);
-    return callback(new Error(msg), false);
   },
   credentials: true,
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use((req, res, next) => {
-  console.log(`📥 ${new Date().toISOString()} ${req.method} ${req.url}`);
-  console.log('Origin:', req.headers.origin);
-  console.log('User-Agent:', req.headers['user-agent']);
+  console.log('=== CORS DEBUG ===');
+  console.log('Request Origin:', req.headers.origin);
+  console.log('Request Method:', req.method);
+  console.log('Request Headers:', req.headers);
   next();
 });
 
