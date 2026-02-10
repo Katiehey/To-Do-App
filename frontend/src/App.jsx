@@ -1,5 +1,5 @@
 // frontend/src/App.jsx - FIXED
-import { useEffect } from 'react'; // ✅ Already imported, but check it's there
+import { useEffect, useEffect } from 'react'; // ✅ Already imported, but check it's there
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';

@@ -1,25 +1,25 @@
-// frontend/src/main.jsx - UPDATED WITH VERSION
+// frontend/src/main.jsx - UPDATED
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Version for cache busting
-const APP_VERSION = '2.0.1';
-
-// Clear all service workers and caches
+// ⚠️ COMPLETELY block service worker registration
 if ('serviceWorker' in navigator) {
+  // Unregister immediately
   navigator.serviceWorker.getRegistrations().then(registrations => {
-    registrations.forEach(registration => registration.unregister());
-    console.log(`🔄 Cleared ${registrations.length} service workers (v${APP_VERSION})`);
+    registrations.forEach(registration => {
+      registration.unregister();
+      console.log('🗑️ Service Worker unregistered');
+    });
   });
   
-  if (caches && caches.keys) {
-    caches.keys().then(cacheNames => {
-      cacheNames.forEach(name => caches.delete(name));
-      console.log(`🗑️ Cleared ${cacheNames.length} caches (v${APP_VERSION})`);
-    });
-  }
+  // Block future registration attempts
+  const originalRegister = navigator.serviceWorker.register;
+  navigator.serviceWorker.register = function() {
+    console.log('🚫 Service Worker registration blocked');
+    return Promise.reject(new Error('Service Worker disabled'));
+  };
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
