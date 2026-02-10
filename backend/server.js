@@ -35,10 +35,37 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Security Middleware
 app.use(helmet()); 
-app.use(cors({  
-  origin: [process.env.CLIENT_URL, 'http://localhost:5173', process.env.TEST_URL, 'http://localhost:4173'].filter(Boolean),
+
+const allowedOrigins = [
+  'https://taskmaster-pro-version.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    const msg = `CORS error: Origin ${origin} not allowed`;
+    console.error(msg);
+    return callback(new Error(msg), false);
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+app.use((req, res, next) => {
+  console.log(`📥 ${new Date().toISOString()} ${req.method} ${req.url}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('User-Agent:', req.headers['user-agent']);
+  next();
+});
 
 app.use(mongoSanitize());
 app.use(xss());
