@@ -44,7 +44,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:10000',
         changeOrigin: true,
       },
     },
@@ -75,6 +75,11 @@ export default defineConfig({
           'calendar-vendor': ['react-big-calendar', 'date-fns'],
           'utils-vendor': ['axios'],
         },
+        // Add content hash to filenames
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      
         assetFileNames: (assetInfo) => {
           if (/\.(png|jpe?g|svg|gif|webp|avif)$/i.test(assetInfo.name)) {
             return 'assets/images/[name]-[hash][extname]';
@@ -89,7 +94,7 @@ export default defineConfig({
       },
     },
 
-    minify: 'terser',
+    minify: 'false', // Disable minification for better debugging and to avoid issues with certain libraries
     terserOptions: {
       compress: {
         drop_console: true,
