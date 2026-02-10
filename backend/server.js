@@ -145,8 +145,3 @@ process.on('unhandledRejection', (err, promise) => {
 
 module.exports = app;
 
-/**
- * find and kill AirPlay on port 5000:
- * sudo lsof -i :5000
- * kill -9 <PID>
- */
