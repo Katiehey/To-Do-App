@@ -1,29 +1,26 @@
-// frontend/src/main.jsx
+// frontend/src/main.jsx - SIMPLIFIED
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 
-// ⚠️ CRITICAL: Unregister ALL service workers on every load
+// ⚠️ Clean up any existing service workers quietly
 if ('serviceWorker' in navigator) {
+  // Unregister without console logs to avoid errors
   navigator.serviceWorker.getRegistrations().then(registrations => {
-    registrations.forEach(registration => {
-      registration.unregister();
-      console.log('🗑️ Service Worker forcefully unregistered');
-    });
-    
-    // Also clear all caches
-    caches.keys().then(cacheNames => {
-      cacheNames.forEach(cacheName => {
-        caches.delete(cacheName);
-        console.log('🧹 Cache deleted:', cacheName);
-      });
-    });
+    registrations.forEach(registration => registration.unregister());
   });
+  
+  // Clear caches quietly
+  if (caches && caches.keys) {
+    caches.keys().then(cacheNames => {
+      cacheNames.forEach(cacheName => caches.delete(cacheName));
+    });
+  }
 }
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 );

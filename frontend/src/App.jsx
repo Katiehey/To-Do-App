@@ -1,4 +1,5 @@
-import { useEffect } from 'react'; // ✅ Added useEffect to imports
+// frontend/src/App.jsx - FIXED
+import { useEffect } from 'react'; // ✅ Already imported, but check it's there
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
@@ -7,7 +8,7 @@ import { ProjectProvider } from './context/ProjectContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { HelmetProvider } from 'react-helmet-async';
-import { throttle } from './utils/performance'; // ✅ Added throttle import
+import { throttle } from './utils/performance';
 
 // Components & Layout
 import Layout from './components/layout/Layout';
@@ -91,8 +92,6 @@ function App() {
   useEffect(() => {
     const handleScroll = throttle(() => {
       // Logic for global scroll effects can go here
-      // Example: Dispatching a custom event or checking window.scrollY
-      // console.log("Throttled scroll:", window.scrollY);
     }, 100);
     
     window.addEventListener('scroll', handleScroll);
@@ -109,10 +108,7 @@ function App() {
                 <NotificationProvider>
                   <OfflineIndicator />
                   <InstallPrompt />
-
-                  {/* ✅ The AnimatedRoutes component is preserved here */}
                   <AnimatedRoutes />
-
                 </NotificationProvider>
               </ProjectProvider>
             </TaskProvider>
