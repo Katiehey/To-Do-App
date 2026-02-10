@@ -39,31 +39,42 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
-  if (!Object.values(passwordStrength).every(Boolean)) return setError('Password requirements not met');
+  
+  // Validation
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+  
+  if (!Object.values(passwordStrength).every(Boolean)) {
+    setError('Password requirements not met');
+    return;
+  }
   
   setLoading(true);
   setError('');
   
-  console.log('📝 [Register] Submitting registration:', {
-    name: formData.name,
-    email: formData.email,
-    hasPassword: !!formData.password
-  });
+  console.log('📝 [Register] Attempting registration...');
   
-  const result = await register(formData.name, formData.email, formData.password);
-  
-  console.log('📊 [Register] Registration result:', result);
-  
-  if (result.success) {
-    console.log('✅ [Register] Registration successful, navigating to /tasks');
+  try {
+    const result = await register(formData.name, formData.email, formData.password);
+    console.log('📊 [Register] Registration result:', result);
+    
+    if (result.success) {
+      setTimeout(() => {
+    console.log('🚀 Navigating to /tasks');
     navigate('/tasks');
-  } else {
-    console.error('❌ [Register] Registration failed:', result.error);
-    setError(result.error || 'Registration failed. Please try again.');
+  }, 100);
+    } else {
+      console.error('❌ [Register] Failed:', result.error);
+      setError(result.error || 'Registration failed');
+    }
+  } catch (error) {
+    console.error('❌ [Register] Unexpected error:', error);
+    setError('An unexpected error occurred');
+  } finally {
+    setLoading(false);
   }
-  
-  setLoading(false);
 };
 
   return (

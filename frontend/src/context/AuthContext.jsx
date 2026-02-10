@@ -44,39 +44,25 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
   try {
-    console.log('🔧 [DEBUG] AuthContext.register called');
-    console.log('🔧 [DEBUG] API URL base:', api.defaults.baseURL);
-    
+    console.log('🔧 [AuthContext] Starting registration...');
     setError(null);
+    
     const response = await api.post('/auth/register', { name, email, password });
+    console.log('✅ [AuthContext] Registration response:', response.data);
     
-    console.log('✅ [DEBUG] Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data,
-      headers: response.headers
-    });
-    
-    console.log('📊 [DEBUG] Expected path: response.data.data');
-    console.log('📊 [DEBUG] Actual response.data:', response.data);
-    console.log('📊 [DEBUG] response.data.data:', response.data?.data);
-    console.log('📊 [DEBUG] response.data.data?.user:', response.data?.data?.user);
-    console.log('📊 [DEBUG] response.data.data?.token:', response.data?.data?.token);
-    
-    // DEBUG: Try different response structures
-    const user = response.data?.data?.user || response.data?.user;
-    const token = response.data?.data?.token || response.data?.token;
-    
-    console.log('🔍 [DEBUG] Extracted user:', user);
-    console.log('🔍 [DEBUG] Extracted token:', token);
+    // Extract data safely
+    const user = response.data?.data?.user;
+    const token = response.data?.data?.token;
     
     if (user && token) {
+      console.log('🔑 [AuthContext] Saving token to localStorage');
       localStorage.setItem('token', token);
       setUser(user);
       setToken(token);
+      console.log('✅ [AuthContext] User set in context:', user.email);
       return { success: true };
     } else {
-      console.error('❌ [DEBUG] Could not extract user/token from response');
+      console.error('❌ [AuthContext] Missing user or token in response');
       return { 
         success: false, 
         error: 'Invalid response from server' 
@@ -84,9 +70,12 @@ export const AuthProvider = ({ children }) => {
     }
     
   } catch (err) {
-    console.error('❌ [DEBUG] Registration error caught:', err);
-    console.error('❌ [DEBUG] Error response:', err.response?.data);
-    console.error('❌ [DEBUG] Error message:', err.message);
+    console.error('❌ [AuthContext] Registration error:', err);
+    
+    // Check if it's a validation error (400)
+    if (err.response?.status === 400) {
+      console.error('📋 [AuthContext] Validation error details:', err.response.data);
+    }
     
     const message = err.response?.data?.message || err.message || 'Registration failed';
     return { success: false, error: message };
