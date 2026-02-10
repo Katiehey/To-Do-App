@@ -42,6 +42,9 @@ const corsOptions = {
       'https://taskmaster-pro-version.netlify.app',
       'http://localhost:5173',
       'http://localhost:4173',
+      'http://192.168.1.*', // Your local network
+  'capacitor://localhost',
+  'ionic://localhost',
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)
