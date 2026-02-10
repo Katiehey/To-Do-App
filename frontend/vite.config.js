@@ -53,7 +53,12 @@ export default defineConfig({
       },
     },
     
-    minify: false, // Keep disabled for debugging
+   minify: 'terser', // Re-enable for production
+  terserOptions: {
+    compress: {
+      drop_console: true, // Remove console.log in production
+    },
+  },
   },
   
   optimizeDeps: {

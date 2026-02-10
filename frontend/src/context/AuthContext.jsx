@@ -17,10 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  if (loading) {
-  return <div className="loading-spinner">Loading...</div>;
-}
-
   useEffect(() => {
     checkAuth();
   }, []);
