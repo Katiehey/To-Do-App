@@ -77,6 +77,19 @@ const Register = () => {
   }
 };
 
+useEffect(() => {
+  console.log('📱 Mobile debug info:');
+  console.log('User Agent:', navigator.userAgent);
+  console.log('Platform:', navigator.platform);
+  console.log('Screen:', `${window.screen.width}x${window.screen.height}`);
+  
+  // Test API connection
+  fetch('https://taskmaster-pro-backend-vqwm.onrender.com/api/health')
+    .then(r => r.json())
+    .then(data => console.log('Backend health:', data))
+    .catch(err => console.error('Backend connection failed:', err));
+}, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4 transition-colors duration-300">
       <div className={darkClass(cardClasses, "w-full max-w-md p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700")}>
