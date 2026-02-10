@@ -38,16 +38,33 @@ const Register = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
-    if (!Object.values(passwordStrength).every(Boolean)) return setError('Password requirements not met');
-    
-    setLoading(true);
-    const result = await register(formData.name, formData.email, formData.password);
-    if (result.success) navigate('/tasks');
-    else setError(result.error); 
-    setLoading(false);
-  };
+  e.preventDefault();
+  if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+  if (!Object.values(passwordStrength).every(Boolean)) return setError('Password requirements not met');
+  
+  setLoading(true);
+  setError('');
+  
+  console.log('📝 [Register] Submitting registration:', {
+    name: formData.name,
+    email: formData.email,
+    hasPassword: !!formData.password
+  });
+  
+  const result = await register(formData.name, formData.email, formData.password);
+  
+  console.log('📊 [Register] Registration result:', result);
+  
+  if (result.success) {
+    console.log('✅ [Register] Registration successful, navigating to /tasks');
+    navigate('/tasks');
+  } else {
+    console.error('❌ [Register] Registration failed:', result.error);
+    setError(result.error || 'Registration failed. Please try again.');
+  }
+  
+  setLoading(false);
+};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-transparent p-4 transition-colors duration-300">
