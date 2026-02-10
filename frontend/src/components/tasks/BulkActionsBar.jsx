@@ -16,7 +16,7 @@ const BulkActionsBar = ({
   const allSelected = selectedCount === totalCount;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] bg-slate-900 dark:bg-slate-950 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] transition-all duration-300 animate-in slide-in-from-bottom">
+    <div data-testid="bulk-actions-bar" className="fixed bottom-0 left-0 right-0 z-[100] bg-slate-900 dark:bg-slate-950 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] transition-all duration-300 animate-in slide-in-from-bottom">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           
@@ -33,6 +33,7 @@ const BulkActionsBar = ({
             </button>
           </div>
 
+          {/* 1. Desktop Select (Project Mover) */}
           <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={onSelectAll}
@@ -59,6 +60,8 @@ const BulkActionsBar = ({
 
             <div className="relative">
               <select
+                data-testid="bulk-project-select"
+                aria-label="Move selected tasks to project"
                 onChange={(e) => {
                   if (e.target.value) {
                     onMoveToProject(e.target.value);
@@ -66,6 +69,7 @@ const BulkActionsBar = ({
                   }
                 }}
                 className="pl-4 pr-10 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-white border border-slate-700 text-xs font-bold appearance-none cursor-pointer"
+                defaultValue=""
               >
                 <option value="" disabled selected>Move to Project...</option>
                 {projects.filter(p => !p.isArchived).map(project => (
@@ -77,6 +81,8 @@ const BulkActionsBar = ({
             </div>
 
             <button
+              aria-label="Delete"
+              data-testid="Delete"
               onClick={onDelete}
               className="flex items-center px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition text-xs font-bold shadow-lg shadow-rose-900/20"
             >
@@ -88,6 +94,8 @@ const BulkActionsBar = ({
           {/* Mobile Actions Dropdown */}
           <div className="md:hidden">
             <select
+              data-testid="bulk-actions-select"
+              aria-label="Bulk actions"
               onChange={(e) => {
                 const action = e.target.value;
                 if (action === 'selectAll') onSelectAll();

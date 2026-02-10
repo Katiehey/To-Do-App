@@ -72,6 +72,18 @@ const taskService = {
     const response = await api.get('/tasks/stats');
     return response.data;
   },
+
+  // Add these to the taskService object
+  bulkDeleteTasks: async (taskIds) => {
+    const response = await api.post('/tasks/bulk-delete', { ids: taskIds });
+    return response.data;
+  },
+
+  bulkUpdateTasks: async (taskIds, updateData) => {
+    const response = await api.post('/tasks/bulk-update', { ids: taskIds, data: updateData });
+    return response.data;
+  },
+
 };
 
 export default taskService;

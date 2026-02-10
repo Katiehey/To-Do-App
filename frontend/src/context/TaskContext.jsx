@@ -49,7 +49,7 @@ export const TaskProvider = ({ children }) => {
       setError(null);
       const filterParams = { ...filters, ...customFilters };
       const payload = await taskService.getTasks(filterParams);
-      setTasks(payload.data.tasks);
+      setTasks(payload.data?.tasks || payload.data || []);
       setPagination({
         page: payload.page,
         pages: payload.pages,

@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useCallback } from 'react';
 import projectService from '../services/projectService';
 
-const ProjectContext = createContext();
+export const ProjectContext = createContext();
 
 export const useProject = () => {
   const context = useContext(ProjectContext);

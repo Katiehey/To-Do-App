@@ -4,6 +4,8 @@ import { TaskListSkeleton } from '../common/LoadingSkeleton';
 import { staggerContainer } from '../../utils/animations';
 import { NoTasksState, AllTasksCompletedState, NoSearchResultsState } from '../common/EmptyState';
 
+
+
 const TaskList = ({
   tasks,
   loading,
@@ -34,6 +36,7 @@ const TaskList = ({
   }
 
   // 3. Render List with Stagger & PopLayout
+  // 3. Render List with Stagger & PopLayout
   return (
     <motion.div
       variants={staggerContainer}
@@ -42,17 +45,22 @@ const TaskList = ({
       className="space-y-3"
     >
       <AnimatePresence mode="popLayout">
-        {tasks.map((task) => (
-          <TaskItem
-            key={task._id}
-            task={task}
-            onUpdateStatus={onUpdateStatus}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            isSelected={selectedTasks.includes(String(task._id))}
-            onSelectTask={onSelectTask}
-          />
-        ))}
+        {tasks.map((task) => {
+          // INSERT GUARD HERE
+          if (!task) return null;
+
+          return (
+            <TaskItem
+              key={task._id}
+              task={task}
+              onUpdateStatus={onUpdateStatus}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              isSelected={selectedTasks.includes(String(task._id))}
+              onSelectTask={onSelectTask}
+            />
+          );
+        })}
       </AnimatePresence>
     </motion.div>
   );

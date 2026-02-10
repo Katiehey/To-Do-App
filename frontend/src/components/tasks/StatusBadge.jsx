@@ -7,11 +7,13 @@ const statusColors = {
   archived: "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-gray-400",
 };
 
-const StatusBadge = ({ status = "pending", onClick, disabled = false }) => {
+// Use ...props to capture data-testid and other attributes
+const StatusBadge = ({ status = "pending", onClick, disabled = false, ...props }) => {
   const label = typeof status === "string" ? status.replace("-", " ") : "Unknown";
 
   return (
     <button
+      {...props} // This applies the data-testid from TaskItem
       onClick={onClick}
       disabled={disabled}
       className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all duration-200

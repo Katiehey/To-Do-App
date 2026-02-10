@@ -42,6 +42,7 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
   const getPendingCount = (projectId) => {
     if (!projectId || !Array.isArray(tasks)) return 0;
     return tasks.filter(t => 
+      t &&
       t.project && 
       (t.project._id === projectId || t.project === projectId) && 
       t.taskStatus !== 'completed'
@@ -90,8 +91,9 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
   };
 
   const SidebarContent = () => (
-    <div 
+    <aside
       id="project-sidebar-content" 
+      aria-label="Project sidebar"
       className="h-full overflow-y-auto p-4 space-y-4"
     >
       {/* Dynamic Header Shadow based on scroll */}
@@ -152,7 +154,7 @@ const ProjectSidebar = ({ activeProjectId, onProjectSelect, onCreateProject, cla
           )}
         </div>
       )}
-    </div>
+    </aside>
   );
 
   return (

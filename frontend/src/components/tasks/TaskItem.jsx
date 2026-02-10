@@ -18,6 +18,7 @@ import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils
 import { fadeInUp } from '../../utils/animations';
 import { TooltipIconButton } from '../common/Tooltip';   
 
+
 // Helper for project color style
 const getProjectColorStyle = (color) => {
   return color && color.match(/^#[0-9A-F]{6}$/i)
@@ -35,6 +36,7 @@ const TaskItem = forwardRef(({
   isSelected, 
   onSelectTask 
 }, ref) => {
+  console.log('Rendering TaskItem with props:', task);
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -58,15 +60,17 @@ const TaskItem = forwardRef(({
   };
 
   const handleDelete = async () => {
+  // 1. Ask for confirmation immediately
+  if (window.confirm('Are you sure you want to delete this task?')) {
+    // 2. Start the visual loading/deleting state
     setIsDeleting(true);
-    setTimeout(async () => {
-      if (window.confirm('Are you sure you want to delete this task?')) {
-        await onDelete(task._id);
-      } else {
-        setIsDeleting(false);
-      }
-    }, 400);
-  };
+    // 3. Call the parent delete function
+    await onDelete(task._id);
+  } else {
+    // 4. Ensure deleting state is false if they cancel
+    setIsDeleting(false);
+  }
+};
 
   const priorityColor = getPriorityColor(task.priority);
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus !== "completed";
@@ -93,25 +97,56 @@ const TaskItem = forwardRef(({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {/* Left: Checkbox */}
-          <div className="flex flex-col items-center gap-3 mt-1">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => onSelectTask(task._id)}
-              className="h-5 w-5 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-            />
-          </div>
+<div className="flex flex-col items-center gap-3 mt-1">
+  <div className="relative flex items-center justify-center">
+    <input
+      type="checkbox"
+      id={`select-task-${task._id}`}
+      checked={isSelected}
+      onChange={() => onSelectTask(task._id)}
+      className="sr-only" // Keeps it hidden but functional
+      aria-label={`Select task: ${task.title}`}
+    />
+    <label
+      htmlFor={`select-task-${task._id}`}
+      className={`
+        w-5 h-5 rounded border-2 cursor-pointer transition-all duration-200
+        flex items-center justify-center
+        ${isSelected 
+          ? 'bg-blue-600 border-blue-600 shadow-sm' 
+          : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-600 hover:border-blue-400'
+        }
+      `}
+    >
+      {isSelected && (
+        <motion.svg
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-3.5 h-3.5 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </motion.svg>
+      )}
+    </label>
+  </div>
+</div>
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1">
               <StatusBadge
+                data-testid={`task-status-${task._id}`}
                 status={task.taskStatus}
                 onClick={handleStatusClick}
                 disabled={isProcessing}
               />
               <motion.h3
                 layout
+                data-testid={`task-title-${task._id}`}
                 className={darkClass(
                   "text-base font-bold break-words transition-colors",
                   task.taskStatus === "completed"
@@ -165,7 +200,7 @@ const TaskItem = forwardRef(({
 
             {/* Meta Info */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {project && (
+              {project && project.name && (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm"
                   style={getProjectColorStyle(project.color)}
@@ -210,6 +245,7 @@ const TaskItem = forwardRef(({
               disabled={isProcessing}
             />
             <TooltipIconButton
+              data-testid={`task-delete-${task._id}`}
               icon={isDeleting ? Clock : Trash2}
               tooltip="Delete task"
               onClick={handleDelete}

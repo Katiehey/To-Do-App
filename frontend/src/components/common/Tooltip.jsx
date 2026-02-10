@@ -101,12 +101,14 @@ const Tooltip = ({
 };
 
 // Icon button with tooltip wrapper
+// Icon button with tooltip wrapper
 export const TooltipIconButton = ({ 
   icon: Icon, 
   tooltip, 
   onClick, 
   className = '',
-  variant = 'default' // 'default' | 'danger' | 'success' | 'warning'
+  variant = 'default', // 'default' | 'danger' | 'success' | 'warning'
+  ...props            // 1. Capture all other props (like data-testid)
 }) => {
   const variantClasses = {
     default: 'text-gray-400 hover:text-blue-600 dark:hover:text-blue-400',
@@ -118,6 +120,7 @@ export const TooltipIconButton = ({
   return (
     <Tooltip content={tooltip}>
       <motion.button
+        {...props}       // 2. Spread those props onto the motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={onClick}

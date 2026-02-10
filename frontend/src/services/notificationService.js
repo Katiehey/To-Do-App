@@ -110,6 +110,7 @@ export const checkTaskReminders = (tasks) => {
   const reminders = [];
 
   tasks.forEach(task => {
+    if (!task) return;
     if (task.taskStatus === 'completed' || !task.dueDate) return;
 
     const dueDate = new Date(task.dueDate);

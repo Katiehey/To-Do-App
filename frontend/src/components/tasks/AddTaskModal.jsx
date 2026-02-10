@@ -14,19 +14,7 @@ import { announceToScreenReader } from '../../utils/accessibility';
 const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDate = null }) => {
   const { projects, fetchProjects } = useProject();
 
-  useEffect(() => {
-    if (isOpen) fetchProjects();
-  }, [fetchProjects, isOpen]);
-  
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleEscape);
-    }
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  const [dateInputRaw, setDateInputRaw] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -46,6 +34,27 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  
+  const resetForm = (newDate = null) => {
+    const defaultProj = projects.find(p => p.isDefault)?._id || '';
+    setFormData({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: newDate || defaultDate || null,
+      tags: [],
+      project: defaultProj,
+      recurring: {
+        enabled: false,
+        frequency: 'daily',
+        interval: 1,
+        endDate: null,
+      }
+    });
+    setTagInput('');
+    setError('');
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,45 +80,45 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
       setFormData(prev => ({ ...prev, project: prev.project || defaultProj }));
       resetForm(defaultDate);
     }
-  }, [initialTask, isOpen]);
+  }, [initialTask, isOpen, defaultDate, fetchProjects]);
 
-  const resetForm = () => {
-    const defaultProj = projects.find(p => p.isDefault)?._id || '';
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      dueDate: defaultDate || null,
-      tags: [],
-      project: defaultProj,
-      recurring: {
-        enabled: false,
-        frequency: 'daily',
-        interval: 1,
-        endDate: null,
-      }
-    });
-    setTagInput('');
-    setError('');
-  };
-
-  const handleAddTag = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = tagInput.trim();
-      if (!val) return;
-      if (!formData.tags.includes(val)) { setFormData(prev => ({ ...prev, tags: [...prev.tags, val] })); }
-      setTagInput('');
+  useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape' && isOpen) {
+      onClose();
     }
   };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, [isOpen, onClose]);
 
-  const [tags, setTags] = useState([]);
+  const handleAddTag = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = tagInput.trim();
+    if (!val) return;
+    
+    // Add this validation to match your test
+    if (val.length > 30) {
+      setError('Tag must be less than 30 characters');
+      return;
+    }
+    
+    if (!formData.tags.includes(val)) { 
+      setFormData(prev => ({ ...prev, tags: [...prev.tags, val] })); 
+    }
+    setTagInput('');
+    setError(''); // Clear error on success
+  }
+};
 
   const handleRemoveTag = (tagToRemove) => {
   setFormData(prev => ({
     ...prev,
     tags: prev.tags.filter(tag => tag !== tagToRemove)
   }));
+  // Optional: Add screen reader announcement
+  announceToScreenReader(`Removed tag ${tagToRemove}`);
 };
 
   const handleChange = (e) => {
@@ -126,63 +135,72 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.title.trim()) {
-      setError('Title is required');
-      announceToScreenReader('Error: Title is required');
-      return;
-    }
-    if (formData.title.length > 200) {
-      setError('Title must be less than 200 characters');
-      return;
-    }
+  e.preventDefault();
+  
+  // 1. Validation: Title
+  if (!formData.title.trim()) {
+    setError('Title is required');
+    return;
+  }
+  if (formData.title.length > 200) {
+    setError('Title must be less than 200 characters');
+    return;
+  }
 
-    let finalTags = [...formData.tags];
-    if (tagInput.trim()) {
-      finalTags.push(tagInput.trim());
-    }
+  // 2. Validation: Date
+  // We check if the user typed something (dateInputRaw) but DatePicker couldn't parse it (formData.dueDate)
+  if (dateInputRaw && (!formData.dueDate || isNaN(formData.dueDate.getTime()))) {
+    setError('Please enter a valid date');
+    return;
+  }
 
-    setLoading(true);
-    const taskData = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      priority: formData.priority,
-      project: formData.project,
-      tags: [...new Set(finalTags)],
-    };
+  setLoading(true);
 
-    if (formData.dueDate) {
-      taskData.dueDate = formData.dueDate.toISOString();
-    }
+  // 3. Prepare Tags
+  let finalTags = [...formData.tags];
+  if (tagInput.trim()) {
+    finalTags.push(tagInput.trim());
+  }
 
-    if (formData.recurring.enabled) {
-      taskData.recurring = {
-        enabled: true,
-        frequency: formData.recurring.frequency,
-        interval: parseInt(formData.recurring.interval) || 1,
-        endDate: formData.recurring.endDate ? formData.recurring.endDate.toISOString() : null,
-      };
-    }
-
-    let result; 
-    if (initialTask?._id) { 
-      result = await onSubmit(initialTask._id, taskData); 
-    } else { 
-      result = await onSubmit(taskData); 
-    } 
-    
-    setLoading(false); 
-    
-    if (result.success) { 
-      announceToScreenReader(initialTask ? 'Task updated successfully' : 'New task created successfully');
-      resetForm(); 
-      onClose(); 
-    } else { 
-      const errorMsg = result.error || 'Failed to save task';
-      setError(errorMsg); 
-      announceToScreenReader(`Error: ${errorMsg}`);
-    } 
+  // 4. Construct Data object
+  const taskData = {
+    title: formData.title.trim(),
+    description: formData.description.trim(),
+    priority: formData.priority,
+    project: formData.project,
+    tags: [...new Set(finalTags)], // Remove duplicates
   };
+
+  // 5. Handle Recurring Data
+  if (formData.recurring.enabled) {
+    taskData.recurring = {
+      enabled: true,
+      frequency: formData.recurring.frequency,
+      interval: parseInt(formData.recurring.interval) || 1,
+      endDate: formData.recurring.endDate ? formData.recurring.endDate.toISOString() : null,
+    };
+  }
+
+  // 6. Submit
+  let result; 
+  if (initialTask?._id) { 
+    result = await onSubmit(initialTask._id, taskData); 
+  } else { 
+    result = await onSubmit(taskData); 
+  } 
+  
+  setLoading(false); 
+  
+  if (result.success) { 
+    announceToScreenReader(initialTask ? 'Task updated successfully' : 'New task created successfully');
+    resetForm(); 
+    onClose(); 
+  } else { 
+    const errorMsg = result.error || 'Failed to save task';
+    setError(errorMsg); 
+    announceToScreenReader(`Error: ${errorMsg}`);
+  } 
+};
 
   return (
     <Modal 
@@ -196,7 +214,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
           {initialTask ? 'Edit Task' : 'Add New Task'}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {error && (
             <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30" role="alert">
               <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
@@ -220,8 +238,9 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
               />
             </div>
             <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Description</label>
-              <textarea 
+              <label htmlFor="description" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Description</label>
+              <textarea
+                id="description" 
                 name="description" 
                 value={formData.description} 
                 onChange={handleChange} 
@@ -235,17 +254,17 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
           {/* Priority & Project */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Priority</label>
-              <select name="priority" value={formData.priority} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
+              <label htmlFor="priority" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Priority</label>
+              <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
                 {PRIORITY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
             </div>
             <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Project</label>
-              <select name="project" value={formData.project} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
+              <label htmlFor="project" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Project</label>
+              <select id="project" name="project" value={formData.project} onChange={handleChange} className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}>
                 <option value="" disabled>Select Project</option>
                 {projects.filter(p => !p.isArchived).map(p => (
-                  <option key={p._id} value={p._id}>{p.icon} {p.name}</option>
+                  <option key={p._id || p.id} value={p._id || p.id}>{p.icon} {p.name}</option>
                 ))}
               </select>
             </div>
@@ -254,21 +273,30 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
           {/* Due date & Tags */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Due Date</label>
+              <label htmlFor="dueDate" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Due Date</label>
               <DatePicker
+                id="dueDate"
+                name="dueDate"
                 selected={formData.dueDate}
-                onChange={(date) => setFormData(prev => ({ ...prev, dueDate: date }))}
+                onChange={(date) => {
+    setFormData(prev => ({ ...prev, dueDate: date }));
+    setDateInputRaw(''); // Clear raw text on valid selection
+  }}
+  onChangeRaw={(e) => setDateInputRaw(e.target.value)}
                 showTimeSelect
                 dateFormat="MMM d, yyyy h:mm aa"
-                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")}
+                customInput={
+    <input className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} />
+  }
                 placeholderText="Set deadline"
               />
             </div>
             <div>
-              <label className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Tags</label>
+              <label htmlFor="tags" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Tags</label>
               <div className="relative">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
+                <input
+                  id="tags" 
                   name="tags" 
                   value={tagInput} 
                   onChange={(e) => setTagInput(e.target.value)} 
@@ -301,7 +329,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
                     formData.recurring.enabled ? 'text-blue-600' : 'text-gray-400'
                   )} 
                 />
-                <span className={darkClass("text-sm font-semibold", textClasses)}>
+                <span htmlFor="recurring-toggle" className={darkClass("text-sm font-semibold", textClasses)}>
                   Recurring Task
                 </span>
               </div>
@@ -349,10 +377,13 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
                   </div>
                 </div>
                 <DatePicker
+                  id="recurring-end-date"
+                  name="recurring-end-date"
                   selected={formData.recurring.endDate}
                   onChange={(date) => handleRecurringChange('endDate', date)}
                   placeholderText="Repeats indefinitely"
                   className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
+                  customInput={<input />}
                 />
               </div>
             )}

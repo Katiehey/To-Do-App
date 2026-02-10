@@ -123,13 +123,15 @@ const Tasks = () => {
     return r;
   };
 
-  const activeProject = projects.find(p => p._id === activeProjectId);
-  const comp = tasks.filter(t => t.taskStatus === 'completed').length;
+  const activeProject = projects?.find(p => p._id === activeProjectId);
+
+  const safeTasks = tasks || []; 
+const comp = safeTasks.filter(t => t && t.taskStatus === 'completed').length;
   const projectStats = { 
-    total: tasks.length, 
+    total: safeTasks.length, 
     completed: comp, 
-    pending: tasks.length - comp, 
-    progress: tasks.length > 0 ? Math.round((comp / tasks.length) * 100) : 0 
+    pending: safeTasks.length - comp, 
+    progress: safeTasks.length > 0 ? Math.round((comp / safeTasks.length) * 100) : 0 
   };
 
   return (
@@ -208,22 +210,23 @@ const Tasks = () => {
           </div>
 
           <BulkActionsBar 
-  selectedCount={selectedTasks.length}
-  totalCount={tasks.length}
+  selectedCount={selectedTasks?.length || 0}
+  totalCount={tasks?.length || 0}
   onMarkComplete={() => handleBulkStatusUpdate('completed')}
   onMarkIncomplete={() => handleBulkStatusUpdate('pending')}
   onDelete={handleBulkDelete}
   onMoveToProject={handleBulkMove}
   onClear={clearSelection}
-  // CHANGE THIS:
   onSelectAll={() => {
-    if (selectedTasks.length === tasks.length) {
+    const currentTasks = tasks || [];
+    const currentSelected = selectedTasks || [];
+    if (currentSelected.length === currentTasks.length && currentTasks.length > 0) {
       clearSelection();
     } else {
       selectAllTasks();
     }
   }}
-  projects={projects}
+  projects={projects || []}
 />
 
           {/* MODALS */}
