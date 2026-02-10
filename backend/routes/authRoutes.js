@@ -20,7 +20,8 @@ const router = express.Router();
 
 // Public routes with validation and rate limiting
 // Limiter and Validation run BEFORE the Controller function
-router.post('/register', authLimiter, registerValidation, registerUser);
+//router.post('/register', authLimiter, registerValidation, registerUser);
+router.post('/register', registerValidation, registerUser);
 router.post('/login', authLimiter, loginValidation, loginUser);
 
 // Protected routes (require authentication)
