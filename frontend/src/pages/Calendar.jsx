@@ -16,8 +16,12 @@ const CalendarPage = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
+  const [calendarReady, setCalendarReady] = useState(false);
 
-  useEffect(() => { fetchTasks({ limit: 999, page: 1 }); }, [fetchTasks]);
+  useEffect(() => {
+    setCalendarReady(false);
+    fetchTasks({ limit: 999, page: 1 }).then(() => setCalendarReady(true));
+  }, [fetchTasks]);
 
   // Handle clicking a task to edit it
   const handleSelectTask = (task) => {
@@ -72,7 +76,7 @@ const CalendarPage = () => {
           <div className={darkClass(cardClasses, "rounded-2xl shadow-lg border dark:border-dark-border overflow-hidden")}>
             <TaskCalendar 
               tasks={tasks}
-              loading={loading}
+              loading={!calendarReady}
               onSelectTask={handleSelectTask} 
               onSelectSlot={handleSelectSlot} 
             />
