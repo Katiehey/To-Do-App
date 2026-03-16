@@ -15,6 +15,10 @@ const NotificationSettings = () => {
   const [permissionState, setPermissionState] = useState(
     'Notification' in window ? Notification.permission : 'unsupported'
   );
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
 
   useEffect(() => {
     setLocalPreferences(preferences);
@@ -58,6 +62,32 @@ const NotificationSettings = () => {
 
   const getBannerContent = () => {
     if (permissionState === 'unsupported') {
+      if (isIOS && !isStandalone) {
+        return {
+          wrapperClass: 'bg-slate-50/50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-700',
+          iconWrapperClass: 'bg-slate-100 dark:bg-slate-800',
+          icon: <BellOff className="w-6 h-6 text-slate-600 dark:text-slate-300" />,
+          titleClass: 'text-slate-900 dark:text-slate-200',
+          title: 'iPhone Requires Home Screen App for Notifications',
+          descClass: 'text-slate-700 dark:text-slate-400',
+          desc: 'On iPhone, notification prompts do not work in a normal browser tab. Open this site in Safari, tap Share → Add to Home Screen, then launch from the app icon and enable notifications.',
+          button: null,
+        };
+      }
+
+      if (isIOS && isStandalone) {
+        return {
+          wrapperClass: 'bg-slate-50/50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-700',
+          iconWrapperClass: 'bg-slate-100 dark:bg-slate-800',
+          icon: <BellOff className="w-6 h-6 text-slate-600 dark:text-slate-300" />,
+          titleClass: 'text-slate-900 dark:text-slate-200',
+          title: 'Notifications Still Unavailable on This iPhone Setup',
+          descClass: 'text-slate-700 dark:text-slate-400',
+          desc: 'You are in Home Screen mode, but this device/browser still reports notifications as unsupported. Ensure iOS is up to date and notifications are allowed for this app in Settings.',
+          button: null,
+        };
+      }
+
       return {
         wrapperClass: 'bg-slate-50/50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-700',
         iconWrapperClass: 'bg-slate-100 dark:bg-slate-800',
