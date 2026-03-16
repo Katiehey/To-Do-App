@@ -10,7 +10,7 @@ import { Calendar as CalIcon } from 'lucide-react';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../utils/darkMode';
 
 const CalendarPage = () => {
-  const { tasks, fetchTasks, createTask, updateTask } = useTask();
+  const { tasks, loading, fetchTasks, createTask, updateTask } = useTask();
   const { projects } = useProject();
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -71,7 +71,8 @@ const CalendarPage = () => {
 
           <div className={darkClass(cardClasses, "rounded-2xl shadow-lg border dark:border-dark-border overflow-hidden")}>
             <TaskCalendar 
-              tasks={tasks} 
+              tasks={tasks}
+              loading={loading}
               onSelectTask={handleSelectTask} 
               onSelectSlot={handleSelectSlot} 
             />

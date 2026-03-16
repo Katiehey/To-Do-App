@@ -20,7 +20,7 @@ const CalendarEvent = ({ event }) => (
   </div>
 );
 
-const TaskCalendar = ({ tasks, onSelectTask, onSelectSlot }) => {
+const TaskCalendar = ({ tasks, loading, onSelectTask, onSelectSlot }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState('month');
 
@@ -64,6 +64,14 @@ const TaskCalendar = ({ tasks, onSelectTask, onSelectSlot }) => {
   }, []);
 
   // ✅ Empty state check
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (events.length === 0) {
     return <NoCalendarEventsState />;
   }
