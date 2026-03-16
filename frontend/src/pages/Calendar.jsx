@@ -17,7 +17,7 @@ const CalendarPage = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useEffect(() => { fetchTasks({ limit: 999, page: 1 }); }, [fetchTasks]);
 
   // Handle clicking a task to edit it
   const handleSelectTask = (task) => {

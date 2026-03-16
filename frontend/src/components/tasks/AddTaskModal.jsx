@@ -169,6 +169,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     priority: formData.priority,
     project: formData.project,
     tags: [...new Set(finalTags)], // Remove duplicates
+    dueDate: formData.dueDate ? formData.dueDate.toISOString() : null,
   };
 
   // 5. Handle Recurring Data
