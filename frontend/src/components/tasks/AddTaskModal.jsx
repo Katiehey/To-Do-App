@@ -290,6 +290,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     <input className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} />
   }
                 placeholderText="Set deadline"
+                popperPlacement="bottom-start"
+                popperModifiers={[{ name: 'preventOverflow', options: { boundary: 'viewport' } }]}
               />
             </div>
             <div>
@@ -385,6 +387,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
                   placeholderText="Repeats indefinitely"
                   className={darkClass(inputClasses, "w-full p-2 text-sm rounded-lg")}
                   customInput={<input />}
+                  popperPlacement="bottom-start"
+                  popperModifiers={[{ name: 'preventOverflow', options: { boundary: 'viewport' } }]}
                 />
               </div>
             )}
