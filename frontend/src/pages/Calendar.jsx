@@ -25,7 +25,7 @@ const CalendarPage = () => {
     setCalendarLoading(true);
     setCalendarError(null);
     try {
-      const payload = await taskService.getTasks({ limit: 999, page: 1 });
+      const payload = await taskService.getTasks({ limit: 100, page: 1 });
       const tasks = payload.data?.tasks || payload.data || [];
       setCalendarTasks(tasks);
       setCalendarLoading(false);
