@@ -6,13 +6,22 @@ export const requestNotificationPermission = async () => {
     console.warn('This browser does not support notifications');
     return false;
   }
+  if (!window.isSecureContext) {
+    console.warn('Notifications require a secure context (HTTPS or localhost)');
+    return false;
+  }
   if (Notification.permission === 'granted') return true;
 
-  if (Notification.permission !== 'denied') {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
+  try {
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+    return false;
+  } catch (error) {
+    console.warn('Notification permission request failed:', error);
+    return false;
   }
-  return false;
 };
 
 export const areNotificationsEnabled = () => {

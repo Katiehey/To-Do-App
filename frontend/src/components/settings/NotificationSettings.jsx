@@ -20,11 +20,30 @@ const NotificationSettings = () => {
     setLocalPreferences(preferences);
   }, [preferences]);
 
+  useEffect(() => {
+    const syncPermissionState = () => {
+      setPermissionState('Notification' in window ? Notification.permission : 'unsupported');
+    };
+
+    syncPermissionState();
+    window.addEventListener('focus', syncPermissionState);
+    document.addEventListener('visibilitychange', syncPermissionState);
+
+    return () => {
+      window.removeEventListener('focus', syncPermissionState);
+      document.removeEventListener('visibilitychange', syncPermissionState);
+    };
+  }, []);
+
   const handleEnableNotifications = async () => {
-    const granted = await enableNotifications();
-    setPermissionState('Notification' in window ? Notification.permission : 'unsupported');
-    if (granted) {
-      updatePreferences({ enabled: true });
+    try {
+      const granted = await enableNotifications();
+      setPermissionState('Notification' in window ? Notification.permission : 'unsupported');
+      if (granted) {
+        updatePreferences({ enabled: true });
+      }
+    } catch {
+      setPermissionState('Notification' in window ? Notification.permission : 'unsupported');
     }
   };
 
@@ -38,6 +57,18 @@ const NotificationSettings = () => {
   };
 
   const getBannerContent = () => {
+    if (permissionState === 'unsupported') {
+      return {
+        wrapperClass: 'bg-slate-50/50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-700',
+        iconWrapperClass: 'bg-slate-100 dark:bg-slate-800',
+        icon: <BellOff className="w-6 h-6 text-slate-600 dark:text-slate-300" />,
+        titleClass: 'text-slate-900 dark:text-slate-200',
+        title: 'Browser Notifications Not Supported',
+        descClass: 'text-slate-700 dark:text-slate-400',
+        desc: 'This browser or context does not support notification prompts. Try using a secure context (HTTPS) or a supported desktop browser.',
+        button: null,
+      };
+    }
     if (permissionState === 'granted') {
       return {
         wrapperClass: 'bg-green-50/50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30',
