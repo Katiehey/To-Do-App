@@ -15,24 +15,30 @@ const CalendarPage = () => {
   const { projects } = useProject();
   const [calendarTasks, setCalendarTasks] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
-  const [calendarError, setCalendarError] = useState(false);
+  const [calendarError, setCalendarError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
 
-  const loadCalendarTasks = useCallback(async () => {
+  const loadCalendarTasks = useCallback(async (attempt = 1) => {
     setCalendarLoading(true);
-    setCalendarError(false);
+    setCalendarError(null);
     try {
       const payload = await taskService.getTasks({ limit: 999, page: 1 });
       const tasks = payload.data?.tasks || payload.data || [];
       setCalendarTasks(tasks);
-    } catch (err) {
-      console.error('Calendar fetch error:', err);
-      setCalendarError(true);
-    } finally {
       setCalendarLoading(false);
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || String(err);
+      console.error(`Calendar fetch error (attempt ${attempt}):`, err);
+      if (attempt < 4) {
+        // Auto-retry with backoff: 3s, 6s, 12s
+        setTimeout(() => loadCalendarTasks(attempt + 1), attempt * 3000);
+      } else {
+        setCalendarError(msg);
+        setCalendarLoading(false);
+      }
     }
   }, []);
 
@@ -97,7 +103,8 @@ const CalendarPage = () => {
           <div className={darkClass(cardClasses, "rounded-2xl shadow-lg border dark:border-dark-border overflow-hidden")}>
             {calendarError ? (
               <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <p className={subtextClasses}>Failed to load tasks. The server may be waking up.</p>
+                <p className={subtextClasses}>Failed to load tasks.</p>
+                <p className="text-xs text-red-500 font-mono px-4 text-center">{calendarError}</p>
                 <button
                   onClick={loadCalendarTasks}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"

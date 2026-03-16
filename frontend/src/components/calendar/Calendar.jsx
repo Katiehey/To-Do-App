@@ -66,8 +66,9 @@ const TaskCalendar = ({ tasks, loading, onSelectTask, onSelectSlot }) => {
   // ✅ Empty state check
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading your calendar...</p>
       </div>
     );
   }
