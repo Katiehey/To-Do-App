@@ -1,32 +1,42 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTask } from '../context/TaskContext';
 import { useProject } from '../context/ProjectContext';
+import taskService from '../services/taskService';
 import { CalendarPageSEO } from '../components/common/SEO'; // ✅ Added SEO Import
 import PageTransition from '../components/common/PageTransition';
 import TaskCalendar from '../components/calendar/Calendar';
 import DayViewModal from '../components/calendar/DayViewModal';
 import AddTaskModal from '../components/tasks/AddTaskModal';
-import { Calendar as CalIcon } from 'lucide-react';
+import { Calendar as CalIcon, RefreshCw } from 'lucide-react';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../utils/darkMode';
 
 const CalendarPage = () => {
-  const { tasks, fetchTasks, createTask, updateTask } = useTask();
+  const { createTask, updateTask } = useTask();
   const { projects } = useProject();
+  const [calendarTasks, setCalendarTasks] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarError, setCalendarError] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDayModalOpen, setIsDayModalOpen] = useState(false);
-  const [calendarReady, setCalendarReady] = useState(false);
-  const hasFetched = useRef(false);
 
-  useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    setCalendarReady(false);
-    fetchTasks({ limit: 999, page: 1, taskStatus: undefined, priority: undefined, search: '' })
-      .then(() => setCalendarReady(true))
-      .catch(() => setCalendarReady(true));
+  const loadCalendarTasks = useCallback(async () => {
+    setCalendarLoading(true);
+    setCalendarError(false);
+    try {
+      const payload = await taskService.getTasks({ limit: 999, page: 1 });
+      const tasks = payload.data?.tasks || payload.data || [];
+      setCalendarTasks(tasks);
+    } catch (err) {
+      console.error('Calendar fetch error:', err);
+      setCalendarError(true);
+    } finally {
+      setCalendarLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadCalendarTasks(); }, [loadCalendarTasks]);
 
   // Handle clicking a task to edit it
   const handleSelectTask = (task) => {
@@ -47,6 +57,12 @@ const CalendarPage = () => {
     setSelectedTask(null);
     setIsDayModalOpen(false);
     setIsTaskModalOpen(true);
+  };
+
+  const handleTaskSubmit = async (...args) => {
+    const result = selectedTask ? await updateTask(...args) : await createTask(...args);
+    if (result.success) loadCalendarTasks();
+    return result;
   };
 
   return (
@@ -79,17 +95,29 @@ const CalendarPage = () => {
           </div>
 
           <div className={darkClass(cardClasses, "rounded-2xl shadow-lg border dark:border-dark-border overflow-hidden")}>
-            <TaskCalendar 
-              tasks={tasks}
-              loading={!calendarReady}
-              onSelectTask={handleSelectTask} 
-              onSelectSlot={handleSelectSlot} 
-            />
+            {calendarError ? (
+              <div className="flex flex-col items-center justify-center h-64 gap-4">
+                <p className={subtextClasses}>Failed to load tasks. The server may be waking up.</p>
+                <button
+                  onClick={loadCalendarTasks}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                >
+                  <RefreshCw className="w-4 h-4" /> Retry
+                </button>
+              </div>
+            ) : (
+              <TaskCalendar 
+                tasks={calendarTasks}
+                loading={calendarLoading}
+                onSelectTask={handleSelectTask} 
+                onSelectSlot={handleSelectSlot} 
+              />
+            )}
           </div>
 
           <DayViewModal 
             date={selectedDate || new Date()} 
-            tasks={tasks} 
+            tasks={calendarTasks} 
             isOpen={isDayModalOpen} 
             onClose={() => setIsDayModalOpen(false)} 
             onSelectTask={handleSelectTask}
@@ -99,7 +127,7 @@ const CalendarPage = () => {
           <AddTaskModal 
             isOpen={isTaskModalOpen} 
             onClose={() => { setIsTaskModalOpen(false); setSelectedTask(null); }} 
-            onSubmit={selectedTask ? updateTask : createTask} 
+            onSubmit={handleTaskSubmit} 
             initialTask={selectedTask}
             defaultDate={selectedDate}
           />
