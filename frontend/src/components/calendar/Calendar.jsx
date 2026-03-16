@@ -6,6 +6,7 @@ import { Repeat } from 'lucide-react';
 import { cardClasses, darkClass } from '../../utils/darkMode';
 import { NoCalendarEventsState } from '../common/EmptyState';   // ✅ import empty state
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '../../styles/calendar.css';
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });

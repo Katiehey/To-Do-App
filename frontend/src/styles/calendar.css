@@ -167,3 +167,179 @@
     margin-bottom: 0.5rem;
   }
 }
+
+/* ===================== DARK MODE ===================== */
+
+.dark .rbc-calendar {
+  background: transparent;
+  color: #f1f5f9;
+}
+
+/* Toolbar */
+.dark .rbc-toolbar {
+  border-bottom-color: #334155;
+}
+
+.dark .rbc-toolbar button {
+  color: #cbd5e1;
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dark .rbc-toolbar button:hover {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.dark .rbc-toolbar button.rbc-active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.dark .rbc-toolbar-label {
+  color: #f1f5f9;
+}
+
+/* Month view */
+.dark .rbc-month-view {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.dark .rbc-header {
+  background: #1e293b;
+  color: #94a3b8;
+  border-bottom-color: #334155;
+  border-left-color: #334155;
+}
+
+.dark .rbc-month-row {
+  border-top-color: #334155;
+}
+
+.dark .rbc-day-bg {
+  background: #0f172a;
+  border-left-color: #334155;
+}
+
+.dark .rbc-off-range-bg {
+  background: #1e293b;
+}
+
+.dark .rbc-today {
+  background: #1e3a5f !important;
+}
+
+.dark .rbc-date-cell > a,
+.dark .rbc-date-cell > span {
+  color: #cbd5e1;
+}
+
+.dark .rbc-off-range .rbc-date-cell > a,
+.dark .rbc-off-range .rbc-date-cell > span {
+  color: #475569;
+}
+
+.dark .rbc-show-more {
+  color: #60a5fa;
+  background: transparent;
+}
+
+/* Week & Day views */
+.dark .rbc-time-view {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.dark .rbc-time-header {
+  border-bottom-color: #334155;
+  background: #1e293b;
+}
+
+.dark .rbc-time-header-content {
+  border-left-color: #334155;
+}
+
+.dark .rbc-time-header-gutter {
+  background: #1e293b;
+}
+
+.dark .rbc-time-content {
+  border-top-color: #334155;
+  background: #0f172a;
+}
+
+.dark .rbc-timeslot-group {
+  border-bottom-color: #1e293b;
+}
+
+.dark .rbc-time-slot {
+  color: #475569;
+  border-top-color: #1e293b;
+}
+
+.dark .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom-color: #334155;
+}
+
+.dark .rbc-day-slot .rbc-time-slot {
+  border-top-color: #1e293b;
+}
+
+.dark .rbc-day-slot .rbc-timeslot-group {
+  border-left-color: #334155;
+}
+
+.dark .rbc-label {
+  color: #64748b;
+}
+
+/* Agenda view */
+.dark .rbc-agenda-view {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table {
+  border-color: #334155;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  background: #1e293b;
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-top-color: #334155;
+  color: #cbd5e1;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
+  border-top-color: #334155;
+}
+
+.dark .rbc-agenda-date-cell,
+.dark .rbc-agenda-time-cell {
+  background: #1e293b;
+  color: #94a3b8;
+  border-right-color: #334155;
+}
+
+.dark .rbc-agenda-event-cell {
+  color: #e2e8f0;
+}
+
+/* Overlay popup (show more) */
+.dark .rbc-overlay {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+.dark .rbc-overlay-header {
+  border-bottom-color: #334155;
+  color: #f1f5f9;
+}
