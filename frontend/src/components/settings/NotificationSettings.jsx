@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNotification } from '../../context/NotificationContext';
-import { Bell, BellOff, Clock, AlertCircle, CheckCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Bell, BellOff, Clock, AlertCircle, CheckCircle, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
 
 const NotificationSettings = () => {
@@ -12,6 +12,9 @@ const NotificationSettings = () => {
   } = useNotification();
 
   const [localPreferences, setLocalPreferences] = useState(preferences);
+  const [permissionState, setPermissionState] = useState(
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
 
   useEffect(() => {
     setLocalPreferences(preferences);
@@ -19,6 +22,7 @@ const NotificationSettings = () => {
 
   const handleEnableNotifications = async () => {
     const granted = await enableNotifications();
+    setPermissionState('Notification' in window ? Notification.permission : 'unsupported');
     if (granted) {
       updatePreferences({ enabled: true });
     }
@@ -33,6 +37,52 @@ const NotificationSettings = () => {
     updatePreferences(updated);
   };
 
+  const getBannerContent = () => {
+    if (permissionState === 'granted') {
+      return {
+        wrapperClass: 'bg-green-50/50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30',
+        iconWrapperClass: 'bg-green-100 dark:bg-green-900/40',
+        icon: <ShieldCheck className="w-6 h-6 text-green-600 dark:text-green-400" />,
+        titleClass: 'text-green-900 dark:text-green-300',
+        title: 'Browser Notifications Active',
+        descClass: 'text-green-700 dark:text-green-400',
+        desc: 'Your browser is configured to show alerts.',
+        button: null,
+      };
+    }
+    if (permissionState === 'denied') {
+      return {
+        wrapperClass: 'bg-red-50/50 border-red-100 dark:bg-red-900/10 dark:border-red-900/30',
+        iconWrapperClass: 'bg-red-100 dark:bg-red-900/40',
+        icon: <ShieldX className="w-6 h-6 text-red-600 dark:text-red-400" />,
+        titleClass: 'text-red-900 dark:text-red-300',
+        title: 'Notifications Blocked by Browser',
+        descClass: 'text-red-700 dark:text-red-400',
+        desc: 'Your browser has blocked notifications for this site. Click the lock/info icon in your address bar, set Notifications to "Allow", then refresh the page.',
+        button: null,
+      };
+    }
+    return {
+      wrapperClass: 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30',
+      iconWrapperClass: 'bg-amber-100 dark:bg-amber-900/40',
+      icon: <ShieldAlert className="w-6 h-6 text-amber-600 dark:text-amber-400" />,
+      titleClass: 'text-amber-900 dark:text-amber-300',
+      title: 'Notifications Not Yet Enabled',
+      descClass: 'text-amber-700 dark:text-amber-400',
+      desc: 'Click the button to allow browser notifications for task reminders.',
+      button: (
+        <button
+          onClick={handleEnableNotifications}
+          className="w-full sm:w-auto px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-sm hover:bg-amber-700 transition shadow-md"
+        >
+          Enable Browser Access
+        </button>
+      ),
+    };
+  };
+
+  const banner = getBannerContent();
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
@@ -45,40 +95,18 @@ const NotificationSettings = () => {
       </div>
 
       {/* Browser Permission Status */}
-      <div className={darkClass(
-        "p-6 rounded-2xl border-2 transition-all",
-        notificationsEnabled 
-          ? 'bg-green-50/50 border-green-100 dark:bg-green-900/10 dark:border-green-900/30' 
-          : 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30'
-      )}>
+      <div className={`p-6 rounded-2xl border-2 transition-all ${banner.wrapperClass}`}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <div className={`p-3 rounded-full ${notificationsEnabled ? 'bg-green-100 dark:bg-green-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}`}>
-              {notificationsEnabled ? (
-                <ShieldCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
-              ) : (
-                <ShieldAlert className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-              )}
+            <div className={`p-3 rounded-full ${banner.iconWrapperClass}`}>
+              {banner.icon}
             </div>
             <div>
-              <h3 className={darkClass("font-bold", notificationsEnabled ? 'text-green-900 dark:text-green-300' : 'text-amber-900 dark:text-amber-300')}>
-                {notificationsEnabled ? 'Browser Notifications Active' : 'Notifications are Blocked'}
-              </h3>
-              <p className={darkClass("text-sm", notificationsEnabled ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400')}>
-                {notificationsEnabled 
-                  ? 'Your browser is configured to show alerts.' 
-                  : 'Please enable browser permissions to receive task reminders.'}
-              </p>
+              <h3 className={`font-bold ${banner.titleClass}`}>{banner.title}</h3>
+              <p className={`text-sm ${banner.descClass}`}>{banner.desc}</p>
             </div>
           </div>
-          {!notificationsEnabled && (
-            <button
-              onClick={handleEnableNotifications}
-              className="w-full sm:w-auto px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-sm hover:bg-amber-700 transition shadow-md"
-            >
-              Enable Browser Access
-            </button>
-          )}
+          {banner.button}
         </div>
       </div>
 
