@@ -14,6 +14,7 @@ const TaskList = ({
   onDelete,
   selectedTasks = [],
   onSelectTask,
+  highlightedTaskId,
   // new props for empty states
   searchQuery,
   showOnlyCompleted,
@@ -56,6 +57,7 @@ const TaskList = ({
               onUpdateStatus={onUpdateStatus}
               onEdit={onEdit}
               onDelete={onDelete}
+              isHighlighted={String(task._id) === String(highlightedTaskId)}
               isSelected={selectedTasks.includes(String(task._id))}
               onSelectTask={onSelectTask}
             />

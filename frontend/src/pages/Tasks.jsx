@@ -42,6 +42,7 @@ const Tasks = () => {
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [highlightedTaskId, setHighlightedTaskId] = useState(null);
 
   // Diagnostics & Scroll Lock
   useEffect(() => {
@@ -60,6 +61,41 @@ const Tasks = () => {
     const p = parseInt(new URLSearchParams(location.search).get('page')) || 1;
     if (p !== filters.page) updateFilters({ page: p });
   }, [location.search, filters.page, updateFilters]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const taskId = params.get('taskId');
+    const fromNotification = params.get('fromNotification') === '1';
+
+    if (!taskId || !fromNotification) return;
+
+    setHighlightedTaskId(taskId);
+
+    // Increase page size so notification target is likely in current fetch.
+    if (filters.limit !== 100 || filters.page !== 1) {
+      updateFilters({ ...filters, page: 1, limit: 100 });
+    }
+
+    const t = setTimeout(() => {
+      const el = document.getElementById(`task-${taskId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Keep URL clean after handling notification deep-link.
+      params.delete('fromNotification');
+      const cleanedSearch = params.toString();
+      navigate({ pathname: '/tasks', search: cleanedSearch ? `?${cleanedSearch}` : '' }, { replace: true });
+    }, 700);
+
+    return () => clearTimeout(t);
+  }, [location.search, filters, updateFilters, navigate]);
+
+  useEffect(() => {
+    if (!highlightedTaskId) return;
+    const timeout = setTimeout(() => setHighlightedTaskId(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [highlightedTaskId]);
 
   useEffect(() => {
     if (activeProjectId) {
@@ -195,6 +231,7 @@ const comp = safeTasks.filter(t => t && t.taskStatus === 'completed').length;
                     onEdit={handleEditTask} 
                     onDelete={handleDeleteTask} // ✅ Uses updated handler with announcement
                     onUpdateStatus={handleUpdateStatus} // ✅ Uses updated handler with announcement
+                    highlightedTaskId={highlightedTaskId}
                     selectedTasks={selectedTasks} 
                     onSelectTask={toggleSelectTask} 
                   />

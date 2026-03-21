@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
       icon: '/icons/Appimages/android/android-launchericon-192-192.png',
       badge: '/icons/Appimages/android/android-launchericon-72-72.png',
       tag: data.tag || 'taskmaster-push',
-      data: { url: data.url || '/' },
+      data: { url: data.url || '/', taskId: data.taskId || null },
       vibrate: [200, 100, 200],
       requireInteraction: true,
     })

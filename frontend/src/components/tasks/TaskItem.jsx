@@ -33,6 +33,7 @@ const TaskItem = forwardRef(({
   onUpdateStatus, 
   onEdit, 
   onDelete, 
+  isHighlighted = false,
   isSelected, 
   onSelectTask 
 }, ref) => {
@@ -90,8 +91,10 @@ const TaskItem = forwardRef(({
         cardClasses,
         "relative rounded-xl shadow-sm border-l-4 transition-all duration-200 border border-gray-200 dark:border-dark-border mb-3",
         task.taskStatus === "completed" ? 'opacity-70' : 'opacity-100',
+        isHighlighted ? 'ring-2 ring-amber-400 dark:ring-amber-300' : '',
         isSelected ? 'ring-2 ring-blue-500 border-blue-500' : ''
       )}
+      id={`task-${task._id}`}
       style={{ borderLeftColor: priorityColor.includes('#') ? priorityColor : undefined }}
     >
       <div className="p-4">
