@@ -120,6 +120,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/test', require('./routes/testRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/push', require('./routes/pushRoutes'));
 
 // 404 handler
 app.use('/*', (req, res) => {

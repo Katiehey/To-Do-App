@@ -50,6 +50,18 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+     pushSubscriptions: {
+       type: [
+         {
+           endpoint: { type: String, required: true },
+           keys: {
+             p256dh: { type: String, required: true },
+             auth:   { type: String, required: true },
+           },
+         },
+       ],
+       default: [],
+     },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
