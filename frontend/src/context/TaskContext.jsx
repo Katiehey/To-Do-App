@@ -49,7 +49,11 @@ export const TaskProvider = ({ children }) => {
       setError(null);
       const filterParams = { ...filters, ...customFilters };
       const payload = await taskService.getTasks(filterParams);
-      setTasks(payload.data?.tasks || payload.data || []);
+      const fetchedTasks = payload.data?.tasks || payload.data || [];
+      setTasks(fetchedTasks);
+      try {
+        localStorage.setItem('notif_cachedTasks', JSON.stringify(fetchedTasks));
+      } catch (_) {}
       setPagination({
         page: payload.page,
         pages: payload.pages,

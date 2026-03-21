@@ -29,6 +29,57 @@ export const areNotificationsEnabled = () => {
 };
 
 /**
+ * Subscribe the current browser to Web Push and send the subscription to the backend.
+ * Returns true on success.
+ */
+export const subscribeToPush = async (apiInstance) => {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+
+    const registration = await navigator.serviceWorker.ready;
+    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      console.warn('VITE_VAPID_PUBLIC_KEY is not set');
+      return false;
+    }
+
+    // Convert base64 VAPID public key to Uint8Array
+    const keyBytes = Uint8Array.from(
+      atob(vapidKey.replace(/-/g, '+').replace(/_/g, '/')),
+      (c) => c.charCodeAt(0)
+    );
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: keyBytes,
+    });
+
+    await apiInstance.post('/push/subscribe', subscription.toJSON());
+    return true;
+  } catch (err) {
+    console.warn('Push subscription failed:', err);
+    return false;
+  }
+};
+
+/**
+ * Unsubscribe the current browser from Web Push.
+ */
+export const unsubscribeFromPush = async (apiInstance) => {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+      await apiInstance.delete('/push/unsubscribe', { data: { endpoint: subscription.endpoint } });
+      await subscription.unsubscribe();
+    }
+  } catch (err) {
+    console.warn('Push unsubscribe failed:', err);
+  }
+};
+
+/**
  * Show browser notification
  */
 export const showNotification = (title, options = {}) => {
@@ -39,6 +90,7 @@ export const showNotification = (title, options = {}) => {
     icon: '/logo.png',
     badge: '/badge.png',
     vibrate: [200, 100, 200],
+    silent: false,
     requireInteraction: false,
     ...options,
   };

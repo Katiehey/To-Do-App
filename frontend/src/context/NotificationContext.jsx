@@ -6,7 +6,9 @@ import {
   showOverdueNotification,
   showUpcomingNotification,
   checkTaskReminders,
+  subscribeToPush,
 } from '../services/notificationService';
+import api from '../services/api';
 import { useTask } from './TaskContext'; // 👈 import tasks from TaskContext
 import { useTheme } from './ThemeContext';
 import { darkClass, cardClasses, textClasses } from '../utils/darkMode';
@@ -42,6 +44,9 @@ export const NotificationProvider = ({ children }) => {
   const enableNotifications = async () => {
     const granted = await requestNotificationPermission();
     setNotificationsEnabled(granted);
+    if (granted) {
+      subscribeToPush(api).catch(() => {}); // best-effort; doesn't block UI
+    }
     return granted;
   };
 
@@ -91,11 +96,17 @@ export const NotificationProvider = ({ children }) => {
     });
   }, [notificationsEnabled, preferences]);
 
-  // 👇 This is the heartbeat interval
+  // 👇 This is the heartbeat interval — uses live tasks, or cached tasks from localStorage when logged out
   useEffect(() => {
     if (!notificationsEnabled) return;
     const interval = setInterval(() => {
-      checkAndNotify(tasks);
+      const activeTasks = tasks.length > 0
+        ? tasks
+        : (() => {
+            try { return JSON.parse(localStorage.getItem('notif_cachedTasks') || '[]'); }
+            catch (_) { return []; }
+          })();
+      checkAndNotify(activeTasks);
     }, preferences.checkInterval * 60 * 1000); // every X minutes
     return () => clearInterval(interval);
   }, [notificationsEnabled, preferences, tasks, checkAndNotify]);
