@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react'; 
 import { cardClasses, textClasses, subtextClasses, darkClass } from '../../utils/darkMode';
@@ -12,6 +12,7 @@ const Login = () => {
   
   const { login } = useAuth(); 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -22,7 +23,16 @@ const Login = () => {
     setLoading(true);
     try {
       const result = await login(formData.email, formData.password); 
-      if (result.success) navigate('/tasks');
+      if (result.success) {
+        const stateFrom = location.state?.from;
+        const fromState = stateFrom
+          ? `${stateFrom.pathname || '/tasks'}${stateFrom.search || ''}`
+          : null;
+        const redirectParam = new URLSearchParams(location.search).get('redirect');
+        const fromQuery = redirectParam && redirectParam.startsWith('/') ? redirectParam : null;
+        const destination = fromState || fromQuery || '/tasks';
+        navigate(destination, { replace: true });
+      }
       else setError(result.error); 
     } catch (err) {
       setError("An unexpected network error occurred."); 
