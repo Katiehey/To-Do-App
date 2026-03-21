@@ -3,12 +3,24 @@ const webpush = require('web-push');
 const { Task, User } = require('../models');
 const { shouldGenerateNextOccurrence, createNextOccurrence } = require('../utils/recurringTasks');
 
-// Configure VAPID once at module load
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+let pushConfigured = false;
+
+const configureWebPush = () => {
+  if (pushConfigured) return true;
+
+  const subject = process.env.VAPID_SUBJECT;
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!subject || !publicKey || !privateKey) {
+    console.warn('⚠️ Push notifications disabled: missing VAPID env variables');
+    return false;
+  }
+
+  webpush.setVapidDetails(subject, publicKey, privateKey);
+  pushConfigured = true;
+  return true;
+};
 
 /**
  * Check and create next occurrences for completed recurring tasks
@@ -49,14 +61,12 @@ const checkRecurringTasks = async () => {
 };
 
 /**
- * Initialize cron jobs
- */
-const initializeCronJobs = () => {
-/**
  * Send push notifications for due/overdue tasks to all users.
  */
 const sendPushNotifications = async () => {
   try {
+    if (!configureWebPush()) return;
+
     const now = new Date();
     const in30 = new Date(now.getTime() + 30 * 60 * 1000);
     const ago24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -118,6 +128,11 @@ const sendPushNotifications = async () => {
     console.error('❌ Error in sendPushNotifications:', error);
   }
 };
+
+/**
+ * Initialize cron jobs
+ */
+const initializeCronJobs = () => {
 
   // 3. Run every minute — push notifications for due/overdue tasks
   cron.schedule('* * * * *', async () => {
