@@ -6,7 +6,8 @@ const { User } = require('../models');
  * Save (or refresh) a push subscription for the authenticated user.
  */
 const subscribe = asyncHandler(async (req, res) => {
-  const { endpoint, keys } = req.body;
+  const payload = req.body?.subscription || req.body || {};
+  const { endpoint, keys } = payload;
 
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     res.status(400);
@@ -14,6 +15,15 @@ const subscribe = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  if (!Array.isArray(user.pushSubscriptions)) {
+    user.pushSubscriptions = [];
+  }
 
   // Replace existing subscription with same endpoint, or add new one
   const existingIndex = user.pushSubscriptions.findIndex(
