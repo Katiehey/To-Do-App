@@ -32,16 +32,28 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';
+  const taskId = event.notification.data?.taskId || null;
+  
+  console.log('[SW] Notification clicked, taskId:', taskId, 'targetUrl:', targetUrl);
+  
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      console.log('[SW] Found', clients.length, 'clients');
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          console.log('[SW] Focusing existing client');
           client.focus();
-          client.navigate(targetUrl);
+          // Post message to client with taskId instead of navigate, for better iOS PWA support
+          client.postMessage({ type: 'NOTIFICATION_CLICK', taskId, targetUrl });
           return;
         }
       }
-      return self.clients.openWindow(targetUrl);
+      console.log('[SW] Opening new window with:', targetUrl);
+      return self.clients.openWindow(targetUrl).then((newClient) => {
+        if (newClient) {
+          newClient.postMessage({ type: 'NOTIFICATION_CLICK', taskId, targetUrl });
+        }
+      });
     })
   );
 });

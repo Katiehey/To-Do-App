@@ -63,12 +63,51 @@ const Tasks = () => {
   }, [location.search, filters.page, updateFilters]);
 
   useEffect(() => {
+    // Check for notification deep-link via sessionStorage (iOS PWA support)
+    // Service worker posts message -> main.jsx stores taskId in sessionStorage
+    const notificationTaskId = sessionStorage.getItem('notificationTaskId');
+    const notificationTimestamp = sessionStorage.getItem('notificationTimestamp');
+    
+    console.log('[Tasks] Checking notification deep-link:', { notificationTaskId, notificationTimestamp });
+
+    if (notificationTaskId && notificationTimestamp) {
+      const age = Date.now() - parseInt(notificationTimestamp);
+      // Only process if timestamp is recent (within 10 seconds)
+      if (age < 10000) {
+        console.log('[Tasks] Processing notification task:', notificationTaskId);
+        setHighlightedTaskId(notificationTaskId);
+        
+        // Increase page size so notification target is likely in current fetch
+        if (filters.limit !== 100 || filters.page !== 1) {
+          updateFilters({ ...filters, page: 1, limit: 100 });
+        }
+        
+        // Schedule scroll after tasks load
+        const t = setTimeout(() => {
+          const el = document.getElementById(`task-${notificationTaskId}`);
+          if (el) {
+            console.log('[Tasks] Scrolling to task:', notificationTaskId);
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          // Clean up sessionStorage after processing
+          sessionStorage.removeItem('notificationTaskId');
+          sessionStorage.removeItem('notificationTimestamp');
+        }, 500);
+        
+        return () => clearTimeout(t);
+      }
+    }
+    
+    // Fallback: check URL params for traditional navigation
     const params = new URLSearchParams(location.search);
     const taskId = params.get('taskId');
     const fromNotification = params.get('fromNotification') === '1';
 
+    console.log('[Tasks] URL param check:', { taskId, fromNotification, search: location.search });
+
     if (!taskId || !fromNotification) return;
 
+    console.log('[Tasks] Setting highlighted task from URL:', taskId);
     setHighlightedTaskId(taskId);
 
     // Increase page size so notification target is likely in current fetch.
