@@ -49,10 +49,14 @@ export const subscribeToPush = async (apiInstance) => {
       (c) => c.charCodeAt(0)
     );
 
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: keyBytes,
-    });
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: keyBytes,
+      });
+    }
 
     await apiInstance.post('/push/subscribe', subscription.toJSON());
     return true;

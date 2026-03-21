@@ -30,7 +30,9 @@ const Login = () => {
           : null;
         const redirectParam = new URLSearchParams(location.search).get('redirect');
         const fromQuery = redirectParam && redirectParam.startsWith('/') ? redirectParam : null;
-        const destination = fromState || fromQuery || '/tasks';
+        const fromSession = sessionStorage.getItem('postLoginRedirect');
+        const destination = fromState || fromQuery || fromSession || '/tasks';
+        sessionStorage.removeItem('postLoginRedirect');
         navigate(destination, { replace: true });
       }
       else setError(result.error); 

@@ -9,6 +9,7 @@ import {
   subscribeToPush,
 } from '../services/notificationService';
 import api from '../services/api';
+import { useAuth } from './AuthContext';
 import { useTask } from './TaskContext'; // 👈 import tasks from TaskContext
 import { useTheme } from './ThemeContext';
 import { darkClass, cardClasses, textClasses } from '../utils/darkMode';
@@ -23,6 +24,7 @@ export const useNotification = () => {
 
 export const NotificationProvider = ({ children }) => {
   const { isDarkMode } = useTheme();
+  const { user, token } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const notifiedTasks = useRef(new Set()); 
   const { tasks } = useTask(); // 👈 get tasks from TaskContext
@@ -40,6 +42,14 @@ export const NotificationProvider = ({ children }) => {
     const saved = localStorage.getItem('notificationPreferences');
     if (saved) setPreferences(JSON.parse(saved));
   }, []);
+
+  useEffect(() => {
+    if (!notificationsEnabled || !user || !token) return;
+
+    subscribeToPush(api).catch((error) => {
+      console.warn('Automatic push subscription sync failed:', error);
+    });
+  }, [notificationsEnabled, user, token]);
 
   const enableNotifications = async () => {
     const granted = await requestNotificationPermission();

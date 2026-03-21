@@ -41,6 +41,7 @@ api.interceptors.response.use(
       // Use window.location.replace to maintain history, but the reload is still necessary
       if (window.location.pathname !== '/login') {
         const redirectTo = `${window.location.pathname}${window.location.search}`;
+        sessionStorage.setItem('postLoginRedirect', redirectTo);
         window.location.replace(`/login?redirect=${encodeURIComponent(redirectTo)}`);
       }
     }

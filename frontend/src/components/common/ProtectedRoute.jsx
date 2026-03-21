@@ -20,6 +20,9 @@ const ProtectedRoute = ({ children }) => {
   // 2. If the user is NOT logged in, redirect them to the login page
   if (!user) {
     const redirectTo = `${location.pathname}${location.search}`;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('postLoginRedirect', redirectTo);
+    }
     // The Navigate component from react-router-dom is used for redirection
     return (
       <Navigate
