@@ -99,7 +99,8 @@ const sendPushNotifications = async () => {
             ? `This task was due ${Math.abs(diffMins)} minute(s) ago.`
             : `Due in ${diffMins} minute(s).`,
           tag: `task-${task._id}-${isOverdue ? 'overdue' : 'due-soon'}`,
-          url: '/tasks',
+          taskId: String(task._id),
+          url: `/tasks?taskId=${task._id}&fromNotification=1`,
         });
 
         const staleEndpoints = [];
