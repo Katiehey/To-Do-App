@@ -21,22 +21,20 @@ const subscribe = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  if (!Array.isArray(user.pushSubscriptions)) {
-    user.pushSubscriptions = [];
-  }
-
-  // Replace existing subscription with same endpoint, or add new one
-  const existingIndex = user.pushSubscriptions.findIndex(
-    (s) => s.endpoint === endpoint
+  // Use atomic updates so unrelated user validation cannot break push registration.
+  await User.updateOne(
+    { _id: req.user._id },
+    {
+      $pull: { pushSubscriptions: { endpoint } },
+    }
   );
 
-  if (existingIndex >= 0) {
-    user.pushSubscriptions[existingIndex] = { endpoint, keys };
-  } else {
-    user.pushSubscriptions.push({ endpoint, keys });
-  }
-
-  await user.save();
+  await User.updateOne(
+    { _id: req.user._id },
+    {
+      $push: { pushSubscriptions: { endpoint, keys } },
+    }
+  );
 
   res.status(201).json({ success: true, message: 'Push subscription saved' });
 });
