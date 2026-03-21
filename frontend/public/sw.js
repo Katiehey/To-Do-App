@@ -33,27 +33,41 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';
   const taskId = event.notification.data?.taskId || null;
-  
-  console.log('[SW] Notification clicked, taskId:', taskId, 'targetUrl:', targetUrl);
-  
+
+  const deepLink = new URL(targetUrl, self.location.origin);
+  if (taskId) {
+    deepLink.pathname = '/tasks';
+    deepLink.searchParams.set('fromNotification', '1');
+    deepLink.searchParams.set('taskId', taskId);
+  }
+
+  console.log('[SW] Notification clicked, taskId:', taskId, 'targetUrl:', targetUrl, 'deepLink:', deepLink.toString());
+
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
       console.log('[SW] Found', clients.length, 'clients');
+
+      // Prefer an existing client, but still navigate for iOS cold/warm start reliability.
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           console.log('[SW] Focusing existing client');
-          client.focus();
-          // Post message to client with taskId instead of navigate, for better iOS PWA support
-          client.postMessage({ type: 'NOTIFICATION_CLICK', taskId, targetUrl });
+          await client.focus();
+          client.postMessage({ type: 'NOTIFICATION_CLICK', taskId, targetUrl: deepLink.toString() });
+
+          if ('navigate' in client) {
+            try {
+              await client.navigate(deepLink.toString());
+            } catch (_) {
+              // Ignore navigation errors and continue with postMessage fallback.
+            }
+          }
           return;
         }
       }
-      console.log('[SW] Opening new window with:', targetUrl);
-      return self.clients.openWindow(targetUrl).then((newClient) => {
-        if (newClient) {
-          newClient.postMessage({ type: 'NOTIFICATION_CLICK', taskId, targetUrl });
-        }
-      });
+
+      // iOS PWA cold start: no client exists yet, so open the deep-link directly.
+      console.log('[SW] Opening new window with:', deepLink.toString());
+      return self.clients.openWindow(deepLink.toString());
     })
   );
 });
