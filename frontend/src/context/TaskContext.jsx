@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useCallback } from 'react';
+import { createContext, useState, useContext, useCallback, useRef } from 'react';
 import taskService from '../services/taskService';
 import SuccessAnimation from '../components/common/SuccessAnimation';
 
@@ -141,9 +141,9 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
-  const updateFilters = (newFilters) => {
+  const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
   const clearFilters = () => {
     setFilters({

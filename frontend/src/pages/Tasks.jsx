@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTask } from '../context/TaskContext';
@@ -57,10 +57,13 @@ const Tasks = () => {
   useEffect(() => { if (tasks.length > 0) checkAndNotify(tasks); }, [tasks, checkAndNotify]);
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
   
+  const filtersPageRef = useRef(filters.page);
+  filtersPageRef.current = filters.page;
+
   useEffect(() => {
     const p = parseInt(new URLSearchParams(location.search).get('page')) || 1;
-    if (p !== filters.page) updateFilters({ page: p });
-  }, [location.search, filters.page, updateFilters]);
+    if (p !== filtersPageRef.current) updateFilters({ page: p });
+  }, [location.search, updateFilters]);
 
   useEffect(() => {
     // Check for notification deep-link via sessionStorage (iOS PWA support)
