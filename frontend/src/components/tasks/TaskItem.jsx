@@ -1,15 +1,16 @@
 import { useState, forwardRef } from 'react'; // ✅ Import forwardRef correctly
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Trash2, 
-  Edit2, 
-  Calendar, 
-  Tag, 
-  Clock, 
-  Folder, 
-  ChevronDown, 
-  ChevronUp, 
-  Repeat
+import {
+  Trash2,
+  Edit2,
+  Calendar,
+  Tag,
+  Clock,
+  Folder,
+  ChevronDown,
+  ChevronUp,
+  Repeat,
+  Archive
 } from 'lucide-react';
 import { formatDate, getPriorityColor } from '../../utils/helpers'; 
 import StatusBadge from './StatusBadge';
@@ -247,6 +248,15 @@ const TaskItem = forwardRef(({
               variant="default"
               disabled={isProcessing}
             />
+            {task.taskStatus === 'completed' && (
+              <TooltipIconButton
+                icon={Archive}
+                tooltip="Archive task"
+                onClick={() => onUpdateStatus(task._id, 'archived')}
+                variant="default"
+                disabled={isProcessing}
+              />
+            )}
             <TooltipIconButton
               data-testid={`task-delete-${task._id}`}
               icon={isDeleting ? Clock : Trash2}

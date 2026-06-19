@@ -20,7 +20,11 @@ const getTasks = asyncHandler(async (req, res) => {
 
   const query = { user: req.user._id };
 
-  if (taskStatus) query.taskStatus = taskStatus;
+  if (taskStatus) {
+    query.taskStatus = taskStatus;
+  } else {
+    query.taskStatus = { $ne: 'archived' };
+  }
   if (priority) query.priority = priority;
   if (project) query.project = project;
   
