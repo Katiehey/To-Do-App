@@ -67,7 +67,7 @@ const Projects = () => {
           <ProjectModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
-            onSubmit={editingProject ? updateProject : createProject}
+            onSubmit={editingProject ? (data) => updateProject(editingProject._id, data) : createProject}
             initialProject={editingProject}
           />
 
