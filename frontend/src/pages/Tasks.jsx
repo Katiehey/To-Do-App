@@ -29,7 +29,7 @@ const Tasks = () => {
   
   const {
     tasks, loading, filters, pagination, fetchTasks, createTask,
-    updateTask, deleteTask, updateTaskStatus, reorderTasks, updateFilters,
+    updateTask, deleteTask, updateTaskStatus, reorderTasks, moveTask, updateFilters,
     clearFilters, selectedTasks, toggleSelectTask, selectAllTasks,
     clearSelection, bulkDeleteTasks, bulkUpdateTasks
   } = useTask();
@@ -278,6 +278,8 @@ const comp = safeTasks.filter(t => t && t.taskStatus === 'completed').length;
                     onSelectTask={toggleSelectTask}
                     reorderEnabled={filters.sortBy === 'order'}
                     onReorder={reorderTasks}
+                    onMoveToTop={(task) => moveTask(task._id, 'top')}
+                    onMoveToBottom={(task) => moveTask(task._id, 'bottom')}
                   />
                 )}
                 

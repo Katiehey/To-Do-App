@@ -10,6 +10,7 @@ const {
   getRecurringTasks,
   createNextOccurrenceManually,
   reorderTasks,
+  moveTask,
 } = require('../controllers/taskController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -37,6 +38,9 @@ router.post('/:id/create-next', createNextOccurrenceManually);
 
 // Persist manual drag-and-drop order (must be before the '/:id' routes)
 router.patch('/reorder', reorderTasks);
+
+// Move a task to the top/bottom of the whole list (across pages)
+router.patch('/:id/move', moveTask);
 
 router.route('/:id')
   .get(getTaskById)

@@ -163,6 +163,21 @@ export const TaskProvider = ({ children }) => {
     }, 500);
   }, [filters.page, filters.limit, fetchTasks]);
 
+  // Move a task to the top/bottom of the entire list (works across pages).
+  // Refetch afterwards so the current page reflects the move.
+  const moveTask = useCallback(async (id, position) => {
+    try {
+      setError(null);
+      await taskService.moveTask(id, position);
+      await fetchTasks();
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to move task';
+      setError(message);
+      return { success: false, error: message };
+    }
+  }, [fetchTasks]);
+
   const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);
@@ -237,6 +252,7 @@ export const TaskProvider = ({ children }) => {
     deleteTask,
     updateTaskStatus,
     reorderTasks,
+    moveTask,
     updateFilters,
     clearFilters,
     toggleSelectTask,

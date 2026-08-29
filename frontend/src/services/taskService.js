@@ -76,6 +76,16 @@ const taskService = {
   },
 
   /**
+   * Move a task to the top or bottom of the whole list (across pages).
+   * @param {string} id
+   * @param {'top'|'bottom'} position
+   */
+  moveTask: async (id, position) => {
+    const response = await api.patch(`/tasks/${id}/move`, { position });
+    return response.data;
+  },
+
+  /**
    * Get task statistics
    */
   getStats: async () => {

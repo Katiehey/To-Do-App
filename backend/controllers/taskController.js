@@ -334,6 +334,46 @@ const reorderTasks = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: 'Tasks reordered' });
 });
 
+/**
+ * @desc    Move a task to the very top or bottom of the whole list
+ *          (works across pagination, unlike drag which is within-page)
+ * @route   PATCH /api/tasks/:id/move
+ * @body    { position: 'top' | 'bottom' }
+ */
+const moveTask = asyncHandler(async (req, res) => {
+  const { position } = req.body;
+
+  if (!['top', 'bottom'].includes(position)) {
+    res.status(400);
+    throw new Error("position must be 'top' or 'bottom'");
+  }
+
+  const task = await Task.findById(req.params.id);
+  if (!task || task.user.toString() !== req.user._id.toString()) {
+    res.status(404);
+    throw new Error('Task not found or unauthorized');
+  }
+
+  // Find the current top (lowest order) or bottom (highest order) task and
+  // place this one just beyond it.
+  const sortDir = position === 'top' ? 1 : -1;
+  const edge = await Task.findOne({ user: req.user._id })
+    .sort({ order: sortDir })
+    .select('order');
+
+  const edgeOrder = edge ? edge.order : 0;
+  task.order = position === 'top' ? edgeOrder - 1 : edgeOrder + 1;
+
+  await task.save();
+  await task.populate('project', 'name color');
+
+  res.status(200).json({
+    success: true,
+    message: `Task moved to ${position}`,
+    data: { task },
+  });
+});
+
 module.exports = {
   getTasks,
   getTaskById,
@@ -345,4 +385,5 @@ module.exports = {
   getRecurringTasks,
   createNextOccurrenceManually,
   reorderTasks,
+  moveTask,
 };
