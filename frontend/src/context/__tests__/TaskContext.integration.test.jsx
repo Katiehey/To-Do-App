@@ -11,6 +11,7 @@ vi.mock('../../services/taskService', () => {
     createTask: vi.fn(),
     updateTask: vi.fn(),
     deleteTask: vi.fn(),
+    reorderTasks: vi.fn(),
   };
   return {
     default: mockService,
@@ -243,6 +244,69 @@ describe('TaskContext Integration', () => {
       // Should have the updated task AND the new nextTask prepended
       expect(result.current.tasks).toHaveLength(2);
       expect(result.current.tasks[0]._id).toBe('new-99');
+    });
+  });
+
+  describe('Reordering Tasks', () => {
+    const initial = [{ _id: '1' }, { _id: '2' }, { _id: '3' }];
+
+    it('updates local order immediately and persists after debounce', async () => {
+      taskService.getTasks.mockResolvedValue({ data: { tasks: initial } });
+      taskService.reorderTasks.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useTask(), { wrapper });
+      await act(async () => { await result.current.fetchTasks(); });
+
+      const reordered = [initial[2], initial[0], initial[1]]; // 3, 1, 2
+
+      act(() => { result.current.reorderTasks(reordered); });
+
+      // Local state changes right away — no waiting on the network.
+      expect(result.current.tasks.map(t => t._id)).toEqual(['3', '1', '2']);
+      expect(taskService.reorderTasks).not.toHaveBeenCalled();
+
+      // Debounced save fires with the new id order and page-1 startIndex (0).
+      await waitFor(() => {
+        expect(taskService.reorderTasks).toHaveBeenCalledWith(['3', '1', '2'], 0);
+      });
+      expect(taskService.reorderTasks).toHaveBeenCalledTimes(1);
+    });
+
+    it('offsets startIndex by page for cross-page ordering', async () => {
+      taskService.getTasks.mockResolvedValue({ data: { tasks: initial } });
+      taskService.reorderTasks.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useTask(), { wrapper });
+      await act(async () => { await result.current.fetchTasks(); });
+
+      // Move to page 2 (default limit is 10) -> startIndex should be 10.
+      act(() => { result.current.updateFilters({ page: 2 }); });
+
+      act(() => { result.current.reorderTasks([initial[1], initial[0], initial[2]]); });
+
+      await waitFor(() => {
+        expect(taskService.reorderTasks).toHaveBeenCalledWith(['2', '1', '3'], 10);
+      });
+    });
+
+    it('re-syncs from the server when the save fails', async () => {
+      const serverTruth = [{ _id: '1' }, { _id: '2' }, { _id: '3' }];
+      taskService.getTasks.mockResolvedValue({ data: { tasks: serverTruth } });
+      taskService.reorderTasks.mockRejectedValue({
+        response: { data: { message: 'Failed to save new order' } },
+      });
+
+      const { result } = renderHook(() => useTask(), { wrapper });
+      await act(async () => { await result.current.fetchTasks(); });
+      taskService.getTasks.mockClear();
+
+      act(() => { result.current.reorderTasks([serverTruth[2], serverTruth[0], serverTruth[1]]); });
+
+      // On failure it surfaces an error and refetches to reflect real order.
+      await waitFor(() => {
+        expect(result.current.error).toBe('Failed to save new order');
+      });
+      expect(taskService.getTasks).toHaveBeenCalled();
     });
   });
 });

@@ -32,8 +32,8 @@ export const TaskProvider = ({ children }) => {
     taskStatus: undefined,
     priority: undefined,
     search: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    sortBy: 'order',
+    sortOrder: 'asc',
   });
 
   const [pagination, setPagination] = useState({
@@ -141,6 +141,28 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Manual drag-and-drop reordering.
+  // Updates the local list instantly on every drag move, then persists the
+  // new order once the user pauses (debounced) to avoid a request per pixel.
+  const reorderSaveTimer = useRef(null);
+  const reorderTasks = useCallback((reorderedTasks) => {
+    setTasks(reorderedTasks);
+
+    if (reorderSaveTimer.current) clearTimeout(reorderSaveTimer.current);
+    reorderSaveTimer.current = setTimeout(async () => {
+      try {
+        const orderedIds = reorderedTasks.map(t => String(t._id));
+        const startIndex = (filters.page - 1) * filters.limit;
+        await taskService.reorderTasks(orderedIds, startIndex);
+      } catch (err) {
+        // Persist failed — re-sync with the server so the UI reflects reality,
+        // then surface the error (fetchTasks clears it at its start).
+        await fetchTasks();
+        setError(err.response?.data?.message || 'Failed to save new order');
+      }
+    }, 500);
+  }, [filters.page, filters.limit, fetchTasks]);
+
   const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);
@@ -152,8 +174,8 @@ export const TaskProvider = ({ children }) => {
       taskStatus: undefined,
       priority: undefined,
       search: '',
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
+      sortBy: 'order',
+      sortOrder: 'asc',
     });
   };
 
@@ -214,6 +236,7 @@ export const TaskProvider = ({ children }) => {
     updateTask,
     deleteTask,
     updateTaskStatus,
+    reorderTasks,
     updateFilters,
     clearFilters,
     toggleSelectTask,

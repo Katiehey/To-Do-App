@@ -27,11 +27,11 @@ const Tasks = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const { 
-    tasks, loading, filters, pagination, fetchTasks, createTask, 
-    updateTask, deleteTask, updateTaskStatus, updateFilters, 
-    clearFilters, selectedTasks, toggleSelectTask, selectAllTasks, 
-    clearSelection, bulkDeleteTasks, bulkUpdateTasks 
+  const {
+    tasks, loading, filters, pagination, fetchTasks, createTask,
+    updateTask, deleteTask, updateTaskStatus, reorderTasks, updateFilters,
+    clearFilters, selectedTasks, toggleSelectTask, selectAllTasks,
+    clearSelection, bulkDeleteTasks, bulkUpdateTasks
   } = useTask();
 
   const { projects, fetchProjects, createProject } = useProject();
@@ -268,14 +268,16 @@ const comp = safeTasks.filter(t => t && t.taskStatus === 'completed').length;
                 {loading ? (
                   <div className="p-8 flex justify-center"><Loader className="animate-spin text-blue-500" /></div>
                 ) : (
-                  <TaskList 
-                    tasks={tasks} 
-                    onEdit={handleEditTask} 
+                  <TaskList
+                    tasks={tasks}
+                    onEdit={handleEditTask}
                     onDelete={handleDeleteTask} // ✅ Uses updated handler with announcement
                     onUpdateStatus={handleUpdateStatus} // ✅ Uses updated handler with announcement
                     highlightedTaskId={highlightedTaskId}
-                    selectedTasks={selectedTasks} 
-                    onSelectTask={toggleSelectTask} 
+                    selectedTasks={selectedTasks}
+                    onSelectTask={toggleSelectTask}
+                    reorderEnabled={filters.sortBy === 'order'}
+                    onReorder={reorderTasks}
                   />
                 )}
                 

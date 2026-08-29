@@ -3,10 +3,13 @@ import { useProject } from '../../context/ProjectContext';
 import { Tag, AlertTriangle, Loader, Repeat } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import Modal from '../common/Modal';
-import { 
-  PRIORITY_LEVELS, 
-  RECURRING_OPTIONS, 
-  RECURRING_INTERVALS 
+import {
+  PRIORITY_LEVELS,
+  RECURRING_OPTIONS,
+  RECURRING_INTERVALS,
+  TITLE_MAX_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
+  TAG_MAX_LENGTH
 } from '../../utils/constants';
 import { textClasses, subtextClasses, inputClasses, darkClass } from '../../utils/darkMode';
 import { announceToScreenReader } from '../../utils/accessibility';
@@ -99,8 +102,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     if (!val) return;
     
     // Add this validation to match your test
-    if (val.length > 30) {
-      setError('Tag must be less than 30 characters');
+    if (val.length > TAG_MAX_LENGTH) {
+      setError(`Tag must be less than ${TAG_MAX_LENGTH} characters`);
       return;
     }
     
@@ -142,8 +145,12 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
     setError('Title is required');
     return;
   }
-  if (formData.title.length > 200) {
-    setError('Title must be less than 200 characters');
+  if (formData.title.length > TITLE_MAX_LENGTH) {
+    setError(`Title must be less than ${TITLE_MAX_LENGTH} characters`);
+    return;
+  }
+  if (formData.description.trim().length > DESCRIPTION_MAX_LENGTH) {
+    setError(`Description cannot exceed ${DESCRIPTION_MAX_LENGTH} characters`);
     return;
   }
 
@@ -241,14 +248,26 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
             <div>
               <label htmlFor="description" className={darkClass("block text-sm font-semibold mb-1", textClasses)}>Description</label>
               <textarea
-                id="description" 
-                name="description" 
-                value={formData.description} 
-                onChange={handleChange} 
-                rows="2" 
-                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg resize-none")} 
-                placeholder="Add more details..." 
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="2"
+                aria-invalid={formData.description.length > DESCRIPTION_MAX_LENGTH}
+                aria-describedby="description-count"
+                className={darkClass(inputClasses, "w-full p-2.5 rounded-lg resize-none")}
+                placeholder="Add more details..."
               />
+              <div
+                id="description-count"
+                className={`mt-1 text-right text-xs ${
+                  formData.description.length > DESCRIPTION_MAX_LENGTH
+                    ? 'text-red-600 font-semibold'
+                    : 'text-gray-400'
+                }`}
+              >
+                {formData.description.length.toLocaleString()}/{DESCRIPTION_MAX_LENGTH.toLocaleString()}
+              </div>
             </div>
           </div>
 

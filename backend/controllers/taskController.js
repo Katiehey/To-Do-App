@@ -14,8 +14,8 @@ const getTasks = asyncHandler(async (req, res) => {
     project,
     tags,
     search,
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
+    sortBy = 'order',
+    sortOrder = 'asc',
   } = req.query;
 
   const query = { user: req.user._id };
@@ -42,6 +42,9 @@ const getTasks = asyncHandler(async (req, res) => {
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+  // Deterministic tie-break so equal-`order` (or equal-anything) tasks keep a
+  // stable sequence across pages instead of shuffling between requests.
+  if (sortBy !== 'createdAt') sortOptions.createdAt = -1;
 
   console.log("Task query:", query);
   const tasks = await Task.find(query)
@@ -91,6 +94,15 @@ const createTask = asyncHandler(async (req, res) => {
   if (!taskData.project) {
     const defaultProject = await Project.findOne({ user: req.user._id, isDefault: true });
     if (defaultProject) taskData.project = defaultProject._id;
+  }
+
+  // Place new tasks at the top of the manual order (lowest `order` value),
+  // matching the UI which prepends newly created tasks.
+  if (taskData.order === undefined) {
+    const topTask = await Task.findOne({ user: req.user._id })
+      .sort({ order: 1 })
+      .select('order');
+    taskData.order = topTask ? topTask.order - 1 : 0;
   }
 
   const task = await Task.create(taskData);
@@ -285,6 +297,43 @@ const createNextOccurrenceManually = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Reorder tasks (persist manual drag-and-drop order)
+ * @route   PATCH /api/tasks/reorder
+ * @body    { orderedIds: string[], startIndex?: number }
+ */
+const reorderTasks = asyncHandler(async (req, res) => {
+  const { orderedIds, startIndex = 0 } = req.body;
+
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    res.status(400);
+    throw new Error('orderedIds must be a non-empty array');
+  }
+
+  const base = parseInt(startIndex, 10) || 0;
+
+  // Verify every id belongs to the requesting user before writing anything.
+  const owned = await Task.countDocuments({
+    _id: { $in: orderedIds },
+    user: req.user._id,
+  });
+  if (owned !== orderedIds.length) {
+    res.status(403);
+    throw new Error('One or more tasks not found or unauthorized');
+  }
+
+  const operations = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: id, user: req.user._id },
+      update: { $set: { order: base + index } },
+    },
+  }));
+
+  await Task.bulkWrite(operations);
+
+  res.status(200).json({ success: true, message: 'Tasks reordered' });
+});
+
 module.exports = {
   getTasks,
   getTaskById,
@@ -295,4 +344,5 @@ module.exports = {
   getTaskStats,
   getRecurringTasks,
   createNextOccurrenceManually,
+  reorderTasks,
 };

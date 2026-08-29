@@ -72,6 +72,17 @@ vi.mock('framer-motion', () => {
     });
   };
 
+  // Reorder.Group / Reorder.Item — render as plain containers, dropping the
+  // drag-specific props so they don't leak onto the DOM.
+  const ReorderGroup = React.forwardRef(({ children, ...props }, ref) => {
+    const { as, axis, values, onReorder, layoutScroll, ...rest } = props;
+    return React.createElement('div', { ...rest, ref }, children);
+  });
+  const ReorderItem = React.forwardRef(({ children, ...props }, ref) => {
+    const { as, value, dragListener, dragControls, layout, ...rest } = props;
+    return React.createElement('div', { ...rest, ref }, children);
+  });
+
   return {
     motion: {
       div: mockComponent('div'),
@@ -83,8 +94,11 @@ vi.mock('framer-motion', () => {
       p: mockComponent('p'),
       nav: mockComponent('nav'),
       section: mockComponent('section'),
+      svg: mockComponent('svg'),
     },
     AnimatePresence: ({ children }) => <>{children}</>,
+    Reorder: { Group: ReorderGroup, Item: ReorderItem },
+    useDragControls: () => ({ start: vi.fn() }),
     useAnimation: () => ({ start: vi.fn(), stop: vi.fn() }),
     useInView: () => [vi.fn(), true],
     useIsPresent: () => true,

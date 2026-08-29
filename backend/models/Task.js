@@ -11,7 +11,7 @@ const taskSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [2000, 'Description cannot be more than 2000 characters'],
+      maxlength: [5000, 'Description cannot be more than 5000 characters'],
     },
     // ✅ Unified status field
     taskStatus: {

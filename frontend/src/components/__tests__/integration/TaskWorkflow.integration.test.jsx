@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '../../../tests/testUtils';
+import { renderWithProviders, mockProjectContext } from '../../../tests/testUtils';
 import TasksPage from '../../../pages/Tasks';
 import taskService from '../../../services/taskService';
 import * as projectService from '../../../services/projectService';
@@ -139,7 +139,14 @@ describe('Task Workflow Integration - Complete Suite', () => {
   // --- TEST 5: BULK MOVE ---
 it('moves multiple tasks to a project via bulk actions', async () => {
   const user = userEvent.setup();
-  renderWithProviders(<TasksPage />);
+  // The bulk "Move to Project" <select> is populated from the ProjectContext,
+  // so the injected project must use the id we select below.
+  renderWithProviders(<TasksPage />, {
+    projectValue: {
+      ...mockProjectContext,
+      projects: [{ _id: PROJECT_ID, name: 'Work Project', color: '#3B82F6' }],
+    },
+  });
   console.log('Mocked tasks:', taskService.getTasks.mock.results);
 console.log('Mocked projects:', projectService.getProjects.mock.results);
 screen.debug();
@@ -164,9 +171,10 @@ screen.debug();
     fireEvent.change(projectSelect, { target: { value: PROJECT_ID } });
   });
 
+  // The app applies bulk updates as one updateTask call per selected task.
   await waitFor(() => {
-    expect(taskService.bulkUpdateTasks).toHaveBeenCalledWith(
-      [TASK_ID],
+    expect(taskService.updateTask).toHaveBeenCalledWith(
+      TASK_ID,
       expect.objectContaining({ project: PROJECT_ID })
     );
   });
@@ -198,8 +206,9 @@ screen.debug();
   const bulkDeleteBtn = await screen.findByRole('button', { name: /delete/i });
   await user.click(bulkDeleteBtn);
 
+  // The app applies bulk deletes as one deleteTask call per selected task.
   await waitFor(() => {
-    expect(taskService.bulkDeleteTasks).toHaveBeenCalledWith([TASK_ID]);
+    expect(taskService.deleteTask).toHaveBeenCalledWith(TASK_ID);
   });
 });
 

@@ -66,6 +66,16 @@ const taskService = {
   },
 
   /**
+   * Persist manual drag-and-drop order.
+   * @param {string[]} orderedIds - task ids in their new visual order
+   * @param {number} startIndex - global index of the first item (for pagination)
+   */
+  reorderTasks: async (orderedIds, startIndex = 0) => {
+    const response = await api.patch('/tasks/reorder', { orderedIds, startIndex });
+    return response.data;
+  },
+
+  /**
    * Get task statistics
    */
   getStats: async () => {

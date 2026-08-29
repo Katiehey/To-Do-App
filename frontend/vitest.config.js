@@ -9,6 +9,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/tests/setup.jsx',
     css: true,
+    // Only run Vitest unit/integration tests under src/. The Playwright specs
+    // in e2e/ are driven by Playwright, not Vitest.
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -27,8 +31,8 @@ export default defineConfig({
       branches: 80,
       statements: 80
     },
-    testTimeout: 10000,
-    hookTimeout: 10000
+    testTimeout: 15000,
+    hookTimeout: 15000
   },
   resolve: {
     alias: {

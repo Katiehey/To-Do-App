@@ -42,17 +42,16 @@ describe('TaskItem Component', () => {
     expect(defaultProps.onSelectTask).toHaveBeenCalledWith('task-1');
   });
 
-  // 2. SUCCESS: This passed previously, keeping the robust selector
+  // 2. SUCCESS: select the delete button by its stable data-testid
   it('calls onDelete when delete button clicked', async () => {
     const user = userEvent.setup();
     renderWithProviders(<TaskItem {...defaultProps} />);
-    
-    const buttons = screen.getAllByRole('button');
-    const deleteBtn = buttons.find(btn => btn.innerHTML.includes('lucide-trash2'));
-    
+
+    const deleteBtn = screen.getByTestId('task-delete-task-1');
+
     await user.click(deleteBtn);
-    
-    // Wrapped in waitFor because your component has a 400ms timeout before calling onDelete
+
+    // window.confirm is mocked to true, so onDelete should be called with the id
     await waitFor(() => {
       expect(defaultProps.onDelete).toHaveBeenCalledWith('task-1');
     }, { timeout: 2000 });

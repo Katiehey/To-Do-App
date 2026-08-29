@@ -83,7 +83,7 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
               <label className={`block text-[10px] font-bold uppercase tracking-widest mb-1.5 px-1 ${subtextClasses}`}>{label}</label>
               <select
                 className={inputBase}
-                value={idx === 0 ? (filters.taskStatus || '') : idx === 1 ? (filters.priority || '') : `${filters.sortBy || 'createdAt'}-${filters.sortOrder || 'desc'}`}
+                value={idx === 0 ? (filters.taskStatus || '') : idx === 1 ? (filters.priority || '') : `${filters.sortBy || 'order'}-${filters.sortOrder || 'asc'}`}
                 onChange={(e) => {
                   if (idx === 0) handleFilterChange('taskStatus', e.target.value || undefined);
                   if (idx === 1) handleFilterChange('priority', e.target.value || undefined);
@@ -113,6 +113,7 @@ const FilterBar = ({ filters, onFilterChange, onClearFilters }) => {
                 {/* Sort Options */}
                 {idx === 2 && (
                   <>
+                    <option value="order-asc" className="dark:bg-slate-800">My Order (Drag & Drop)</option>
                     <option value="createdAt-desc" className="dark:bg-slate-800">Newest First</option>
                     <option value="dueDate-asc" className="dark:bg-slate-800">Due Date (Earliest)</option>
                     <option value="priority-desc" className="dark:bg-slate-800">Priority (High to Low)</option>

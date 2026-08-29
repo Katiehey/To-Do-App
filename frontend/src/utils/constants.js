@@ -1,3 +1,9 @@
+// Field length limits — must stay in sync with backend
+// (backend/models/Task.js + backend/middleware/validators/taskValidator.js)
+export const TITLE_MAX_LENGTH = 200;
+export const DESCRIPTION_MAX_LENGTH = 5000;
+export const TAG_MAX_LENGTH = 30;
+
 export const PRIORITY_LEVELS = [
   { value: 'low', label: 'Low', color: 'green' },
   { value: 'medium', label: 'Medium', color: 'yellow' },

@@ -3,6 +3,7 @@ import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, mockTaskContext, mockProjectContext } from '../../../tests/testUtils';
 import AddTaskModal from '../AddTaskModal';
+import { DESCRIPTION_MAX_LENGTH } from '../../../utils/constants';
 
 vi.mock('../../../services/taskService', () => ({
   createTask: vi.fn()
@@ -140,6 +141,62 @@ describe('AddTaskForm Integration', () => {
       const errorMsg = await screen.findByText(/tag must be.*30 characters/i);
       expect(errorMsg).toBeInTheDocument();
     });
+
+    it('rejects a description over the max length', async () => {
+      const user = userEvent.setup();
+
+      renderWithProviders(<AddTaskModal {...defaultProps} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Valid Title');
+
+      // Set the value directly — typing 5000+ chars char-by-char is too slow.
+      const descriptionInput = screen.getByLabelText(/description/i);
+      fireEvent.change(descriptionInput, {
+        target: { value: 'a'.repeat(DESCRIPTION_MAX_LENGTH + 1) },
+      });
+
+      await user.click(screen.getByRole('button', { name: /create task/i }));
+
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+      expect(
+        screen.getByText(new RegExp(`cannot exceed ${DESCRIPTION_MAX_LENGTH} characters`, 'i'))
+      ).toBeInTheDocument();
+    });
+
+    it('allows a description at exactly the max length', async () => {
+      const user = userEvent.setup();
+      mockOnSubmit.mockResolvedValue({ success: true });
+
+      renderWithProviders(<AddTaskModal {...defaultProps} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Valid Title');
+
+      const descriptionInput = screen.getByLabelText(/description/i);
+      fireEvent.change(descriptionInput, {
+        target: { value: 'a'.repeat(DESCRIPTION_MAX_LENGTH) },
+      });
+
+      await user.click(screen.getByRole('button', { name: /create task/i }));
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: 'a'.repeat(DESCRIPTION_MAX_LENGTH),
+          })
+        );
+      });
+    });
+
+    it('shows a live character counter for the description', async () => {
+      renderWithProviders(<AddTaskModal {...defaultProps} />);
+
+      const descriptionInput = screen.getByLabelText(/description/i);
+      fireEvent.change(descriptionInput, { target: { value: 'hello' } });
+
+      // toLocaleString-formatted counter, e.g. "5/5,000"
+      const limit = DESCRIPTION_MAX_LENGTH.toLocaleString();
+      expect(screen.getByText(`5/${limit}`)).toBeInTheDocument();
+    });
   });
 
   describe('Form Submission', () => {
@@ -187,9 +244,11 @@ describe('AddTaskForm Integration', () => {
   const projectSelect = screen.getByLabelText(/project/i);
   await user.selectOptions(projectSelect, '1');
 
-  // 3. Handle Date
+  // 3. Handle Date — set it in one shot. Typing char-by-char into the
+  // react-datepicker (timeIntervals={1}) re-renders on every keystroke and
+  // is the main source of this test's slowness/flakiness under load.
   const dateInput = screen.getByPlaceholderText(/set deadline/i);
-  await user.type(dateInput, '2026-12-31');
+  fireEvent.change(dateInput, { target: { value: '2026-12-31' } });
 
   await user.click(screen.getByRole('button', { name: /create task/i }));
 
@@ -213,9 +272,11 @@ describe('AddTaskForm Integration', () => {
       await user.type(screen.getByLabelText(/title/i), 'New Task');
       await user.click(screen.getByRole('button', { name: /create task/i }));
 
+      // Allow extra headroom: the submit path is async and can lag under
+      // full-suite parallel load.
       await waitFor(() => {
         expect(mockOnClose).toHaveBeenCalled();
-      });
+      }, { timeout: 3000 });
     });
 
     it('shows error message on submission failure', async () => {

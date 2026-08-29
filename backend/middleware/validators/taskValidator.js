@@ -32,8 +32,8 @@ const createTaskValidation = [
   body('description')
     .optional()
     .trim()
-    .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .isLength({ max: 5000 })
+    .withMessage('Description cannot exceed 5000 characters'),
   
   body('priority')
     .optional()
@@ -99,8 +99,8 @@ const updateTaskValidation = [
   body('description')
     .optional()
     .trim()
-    .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
+    .isLength({ max: 5000 })
+    .withMessage('Description cannot exceed 5000 characters'),
   
   body('priority')
     .optional()
