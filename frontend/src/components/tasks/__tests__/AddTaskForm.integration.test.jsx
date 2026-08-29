@@ -467,6 +467,36 @@ describe('AddTaskForm Integration', () => {
         );
       });
     });
+
+    it('persists turning recurring OFF when editing', async () => {
+      const user = userEvent.setup();
+
+      const recurringTask = {
+        _id: 'task-recurring-1',
+        title: 'Monthly Report',
+        recurring: { enabled: true, frequency: 'monthly', interval: 1 },
+      };
+
+      renderWithProviders(
+        <AddTaskModal {...defaultProps} initialTask={recurringTask} />,
+        { taskValue: taskContextValue }
+      );
+
+      // Toggle starts on (checked) because the task is recurring; turn it off.
+      const recurringCheckbox = screen.getByLabelText(/recurring task/i);
+      expect(recurringCheckbox).toBeChecked();
+      await user.click(recurringCheckbox);
+
+      await user.click(screen.getByRole('button', { name: /update task/i }));
+
+      // Must send recurring:{ enabled:false } so the backend actually disables it.
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalledWith(
+          'task-recurring-1',
+          expect.objectContaining({ recurring: { enabled: false } })
+        );
+      });
+    });
   });
 
   describe('Form Reset', () => {

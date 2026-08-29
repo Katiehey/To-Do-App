@@ -180,6 +180,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
   };
 
   // 5. Handle Recurring Data
+  // Always send `recurring` so toggling it OFF actually persists — otherwise
+  // the field is omitted and the backend keeps the old (enabled) settings.
   if (formData.recurring.enabled) {
     taskData.recurring = {
       enabled: true,
@@ -187,6 +189,8 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
       interval: parseInt(formData.recurring.interval) || 1,
       endDate: formData.recurring.endDate ? formData.recurring.endDate.toISOString() : null,
     };
+  } else {
+    taskData.recurring = { enabled: false };
   }
 
   // 6. Submit
