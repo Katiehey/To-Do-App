@@ -19,6 +19,7 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
     setLoading(true);
     try {
@@ -59,7 +60,7 @@ const Login = () => {
           </div>
         )}
         
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className={`block text-sm font-medium mb-1 ${darkClass("text-gray-700", textClasses)}`}>
               Email address
@@ -109,8 +110,7 @@ const Login = () => {
           </div>
           
           <button
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading}
             className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
           >
