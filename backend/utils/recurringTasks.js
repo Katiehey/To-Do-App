@@ -38,10 +38,10 @@ const shouldGenerateNextOccurrence = (task) => {
     return false;
   }
 
-  // If next occurrence is already scheduled in the future
-  //if (task.recurring.nextOccurrence && new Date() < new Date(task.recurring.nextOccurrence)) {
-    //return false;
-  //}
+  // A completed occurrence with a nextOccurrence has already generated its
+  // successor. The successor starts with nextOccurrence unset and can be
+  // scheduled when it is completed.
+  if (task.recurring.nextOccurrence) return false;
 
   return true;
 };
@@ -80,7 +80,8 @@ const createNextOccurrence = async (Task, originalTask) => {
     tags: originalTask.tags,
     project: originalTask.project,
     user: originalTask.user,
-    recurring: { ...originalTask.recurring, nextOccurrence: nextDate },
+    // The new occurrence has not generated its own successor yet.
+    recurring: { ...originalTask.recurring, nextOccurrence: null },
     completed: false, // optional, depending on schema
     subtasks: originalTask.subtasks.map((st) => ({
       title: st.title,
