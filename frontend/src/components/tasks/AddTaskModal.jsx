@@ -308,7 +308,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, initialTask = null, defaultDa
   }}
   onChangeRaw={(e) => setDateInputRaw(e.target.value)}
                 showTimeSelect
-                timeIntervals={1}
+                timeIntervals={15}
                 dateFormat="MMM d, yyyy h:mm aa"
                 customInput={
     <input className={darkClass(inputClasses, "w-full p-2.5 rounded-lg")} />

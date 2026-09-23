@@ -245,7 +245,7 @@ describe('AddTaskForm Integration', () => {
   await user.selectOptions(projectSelect, '1');
 
   // 3. Handle Date — set it in one shot. Typing char-by-char into the
-  // react-datepicker (timeIntervals={1}) re-renders on every keystroke and
+  // react-datepicker re-renders on every keystroke and
   // is the main source of this test's slowness/flakiness under load.
   const dateInput = screen.getByPlaceholderText(/set deadline/i);
   fireEvent.change(dateInput, { target: { value: '2026-12-31' } });
